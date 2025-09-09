@@ -1,0 +1,271 @@
+"use server"
+
+import { sql } from "@/lib/db"
+import { cookies } from "next/headers"
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  avatar?: string
+}
+
+export interface Order {
+  id: string
+  date: string
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"
+  total: number
+  items: Array<{
+    id: string
+    name: string
+    quantity: number
+    price: number
+    image: string
+  }>
+  trackingNumber?: string
+}
+
+// Create or get user
+export async function createUser(name: string, email: string): Promise<User | null> {
+  try {
+    // Check if user already exists
+    const existingUser = await sql`
+      SELECT id, name, email, avatar FROM users WHERE email = ${email}
+    `
+
+    if (existingUser.length > 0) {
+      return {
+        id: existingUser[0].id,
+        name: existingUser[0].name,
+        email: existingUser[0].email,
+        avatar: existingUser[0].avatar,
+      }
+    }
+
+    // Create new user
+    const newUser = await sql`
+      INSERT INTO users (name, email)
+      VALUES (${name}, ${email})
+      RETURNING id, name, email, avatar
+    `
+
+    return {
+      id: newUser[0].id,
+      name: newUser[0].name,
+      email: newUser[0].email,
+      avatar: newUser[0].avatar,
+    }
+  } catch (error) {
+    console.error("Error creating user:", error)
+    return null
+  }
+}
+
+// Get user by email
+export async function getUserByEmail(email: string): Promise<User | null> {
+  try {
+    const user = await sql`
+      SELECT id, name, email, avatar FROM users WHERE email = ${email}
+    `
+
+    if (user.length === 0) return null
+
+    return {
+      id: user[0].id,
+      name: user[0].name,
+      email: user[0].email,
+      avatar: user[0].avatar,
+    }
+  } catch (error) {
+    console.error("Error getting user by email:", error)
+    return null
+  }
+}
+
+// Get user orders
+export async function getUserOrders(userId: string): Promise<Order[]> {
+  try {
+    const orders = await sql`
+      SELECT 
+        o.id,
+        o.created_at as date,
+        o.status,
+        o.total::float,
+        o.tracking_number
+      FROM orders o
+      WHERE o.user_id = ${userId}
+      ORDER BY o.created_at DESC
+    `
+
+    const ordersWithItems: Order[] = []
+
+    for (const order of orders) {
+      const items = await sql`
+        SELECT 
+          product_id as id,
+          name,
+          quantity,
+          price::float,
+          image
+        FROM order_items
+        WHERE order_id = ${order.id}
+      `
+
+      ordersWithItems.push({
+        id: order.id,
+        date: order.date.toISOString().split("T")[0],
+        status: order.status.toLowerCase() as Order["status"],
+        total: order.total,
+        trackingNumber: order.tracking_number,
+        items: items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.image || "",
+        })),
+      })
+    }
+
+    return ordersWithItems
+  } catch (error) {
+    console.error("Error getting user orders:", error)
+    return []
+  }
+}
+
+// Create order from cart
+export async function createOrderFromCart(
+  userId: string,
+  orderData: {
+    subtotal: number
+    tax: number
+    shipping: number
+    total: number
+    shippingAddress: {
+      firstName: string
+      lastName: string
+      email: string
+      phone?: string
+      address: string
+      city: string
+      state: string
+      zipCode: string
+    }
+    billingAddress?: {
+      firstName: string
+      lastName: string
+      address: string
+      city: string
+      state: string
+      zipCode: string
+    }
+  },
+): Promise<string | null> {
+  try {
+    await sql`BEGIN`
+
+    // Get user's cart
+    const cart = await sql`
+      SELECT id FROM carts WHERE user_id = ${userId}
+    `
+
+    if (cart.length === 0) {
+      await sql`ROLLBACK`
+      return null
+    }
+
+    const cartId = cart[0].id
+
+    // Get cart items
+    const cartItems = await sql`
+      SELECT product_id, name, price, image, category, quantity
+      FROM cart_items
+      WHERE cart_id = ${cartId}
+    `
+
+    if (cartItems.length === 0) {
+      await sql`ROLLBACK`
+      return null
+    }
+
+    // Create order
+    const order = await sql`
+      INSERT INTO orders (user_id, status, subtotal, tax, shipping, total)
+      VALUES (${userId}, 'PENDING', ${orderData.subtotal}, ${orderData.tax}, ${orderData.shipping}, ${orderData.total})
+      RETURNING id
+    `
+
+    const orderId = order[0].id
+
+    // Create order items
+    for (const item of cartItems) {
+      await sql`
+        INSERT INTO order_items (order_id, product_id, name, price, image, category, quantity)
+        VALUES (${orderId}, ${item.product_id}, ${item.name}, ${item.price}, ${item.image}, ${item.category}, ${item.quantity})
+      `
+    }
+
+    // Create shipping address
+    await sql`
+      INSERT INTO shipping_addresses (order_id, first_name, last_name, email, phone, address, city, state, zip_code)
+      VALUES (${orderId}, ${orderData.shippingAddress.firstName}, ${orderData.shippingAddress.lastName}, 
+              ${orderData.shippingAddress.email}, ${orderData.shippingAddress.phone}, ${orderData.shippingAddress.address},
+              ${orderData.shippingAddress.city}, ${orderData.shippingAddress.state}, ${orderData.shippingAddress.zipCode})
+    `
+
+    // Create billing address if provided
+    if (orderData.billingAddress) {
+      await sql`
+        INSERT INTO billing_addresses (order_id, first_name, last_name, address, city, state, zip_code)
+        VALUES (${orderId}, ${orderData.billingAddress.firstName}, ${orderData.billingAddress.lastName},
+                ${orderData.billingAddress.address}, ${orderData.billingAddress.city}, 
+                ${orderData.billingAddress.state}, ${orderData.billingAddress.zipCode})
+      `
+    }
+
+    // Clear cart
+    await sql`
+      DELETE FROM cart_items WHERE cart_id = ${cartId}
+    `
+
+    await sql`COMMIT`
+    return orderId
+  } catch (error) {
+    await sql`ROLLBACK`
+    console.error("Error creating order:", error)
+    return null
+  }
+}
+
+// Set auth cookie
+export async function setAuthCookie(user: User) {
+  const cookieStore = await cookies()
+  cookieStore.set("auth-user", JSON.stringify(user), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  })
+}
+
+// Get auth cookie
+export async function getAuthCookie(): Promise<User | null> {
+  try {
+    const cookieStore = await cookies()
+    const userCookie = cookieStore.get("auth-user")
+
+    if (!userCookie) return null
+
+    return JSON.parse(userCookie.value)
+  } catch (error) {
+    console.error("Error getting auth cookie:", error)
+    return null
+  }
+}
+
+// Clear auth cookie
+export async function clearAuthCookie() {
+  const cookieStore = await cookies()
+  cookieStore.delete("auth-user")
+}
