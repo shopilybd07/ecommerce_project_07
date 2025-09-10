@@ -3,6 +3,43 @@
 import { prisma } from "@/lib/db"
 import { cookies } from "next/headers"
 
+// Database entity interfaces
+interface DbUser {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+}
+
+interface DbCart {
+  id: string;
+}
+
+interface DbCartItem {
+  product_id: string;
+  name: string;
+  price: number;
+  image: string | null;
+  category: string;
+  quantity: number;
+}
+
+interface DbOrder {
+  id: string;
+  date: Date;
+  status: string;
+  total: number;
+  tracking_number: string | null;
+}
+
+interface DbOrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  image: string | null;
+}
+
 export interface UserRole {
   id: string
   userId: string
@@ -42,7 +79,7 @@ export interface Order {
 export async function createUser(name: string, email: string): Promise<User | null> {
   try {
     // Check if user already exists
-    const existingUser = await prisma.$queryRaw`
+    const existingUser = await prisma.$queryRaw<DbUser[]>`
       SELECT id, name, email, avatar FROM users WHERE email = ${email}
     `
 
@@ -51,12 +88,12 @@ export async function createUser(name: string, email: string): Promise<User | nu
         id: existingUser[0].id,
         name: existingUser[0].name,
         email: existingUser[0].email,
-        avatar: existingUser[0].avatar,
+        avatar: existingUser[0].avatar || undefined,
       }
     }
 
     // Create new user
-    const newUser = await prisma.$queryRaw`
+    const newUser = await prisma.$queryRaw<DbUser[]>`
       INSERT INTO users (name, email)
       VALUES (${name}, ${email})
       RETURNING id, name, email, avatar
@@ -66,7 +103,7 @@ export async function createUser(name: string, email: string): Promise<User | nu
       id: newUser[0].id,
       name: newUser[0].name,
       email: newUser[0].email,
-      avatar: newUser[0].avatar,
+      avatar: newUser[0].avatar || undefined,
     }
   } catch (error) {
     console.error("Error creating user:", error)
@@ -77,7 +114,7 @@ export async function createUser(name: string, email: string): Promise<User | nu
 // Get user by email
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
-    const user = await prisma.$queryRaw`
+    const user = await prisma.$queryRaw<DbUser[]>`
       SELECT id, name, email, avatar FROM users WHERE email = ${email}
     `
 
@@ -87,7 +124,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
       id: user[0].id,
       name: user[0].name,
       email: user[0].email,
-      avatar: user[0].avatar,
+      avatar: user[0].avatar || undefined,
     }
   } catch (error) {
     console.error("Error getting user by email:", error)
@@ -98,7 +135,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 // Get user orders
 export async function getUserOrders(userId: string): Promise<Order[]> {
   try {
-    const orders = await prisma.$queryRaw`
+    const orders = await prisma.$queryRaw<DbOrder[]>`
       SELECT
         o.id,
         o.created_at as date,
@@ -113,7 +150,7 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
     const ordersWithItems: Order[] = []
 
     for (const order of orders) {
-      const items = await prisma.$queryRaw`
+      const items = await prisma.$queryRaw<DbOrderItem[]>`
         SELECT
           product_id as id,
           name,
@@ -129,8 +166,8 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
         date: order.date.toISOString().split("T")[0],
         status: order.status.toLowerCase() as Order["status"],
         total: order.total,
-        trackingNumber: order.tracking_number,
-        items: items.map((item: { id: string; name: string; quantity: number; price: number; image?: string }) => ({
+        trackingNumber: order.tracking_number || undefined,
+        items: items.map(item => ({
           id: item.id,
           name: item.name,
           quantity: item.quantity,
@@ -179,7 +216,7 @@ export async function createOrderFromCart(
     await prisma.$queryRaw`BEGIN`
 
     // Get user's cart
-    const cart = await prisma.$queryRaw`
+    const cart = await prisma.$queryRaw<DbCart[]>`
       SELECT id FROM carts WHERE user_id = ${userId}
     `
 
@@ -191,7 +228,7 @@ export async function createOrderFromCart(
     const cartId = cart[0].id
 
     // Get cart items
-    const cartItems = await prisma.$queryRaw`
+    const cartItems = await prisma.$queryRaw<DbCartItem[]>`
       SELECT product_id, name, price, image, category, quantity
       FROM cart_items
       WHERE cart_id = ${cartId}
@@ -203,7 +240,7 @@ export async function createOrderFromCart(
     }
 
     // Create order
-    const order = await prisma.$queryRaw`
+    const order = await prisma.$queryRaw<{ id: string }[]>`
       INSERT INTO orders (user_id, status, subtotal, tax, shipping, total)
       VALUES (${userId}, 'PENDING', ${orderData.subtotal}, ${orderData.tax}, ${orderData.shipping}, ${orderData.total})
       RETURNING id

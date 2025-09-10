@@ -1,4 +1,4 @@
-import { prisma } from "./prisma"
+import prisma from "./prisma"
 import { Prisma } from "@prisma/client"
 
 // Define enums since they're not properly exported from @prisma/client

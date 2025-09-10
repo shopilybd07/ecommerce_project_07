@@ -1,4 +1,4 @@
-import { prisma } from "./prisma"
+import prisma from "./prisma"
 import type { ProductStatus, ProductType, Prisma } from "@prisma/client"
 
 // Types

@@ -1,64 +1,23 @@
-"use client"
-
-import { ShoppingBag, Star, Truck, Shield, Headphones, ArrowRight, User, Heart } from "lucide-react"
+import { ShoppingBag, Star, Truck, Shield, Headphones, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { HybridCartDrawer } from "@/components/hybrid-cart-drawer"
-import { useHybridCart } from "@/contexts/hybrid-cart-context"
-import { SearchBar } from "@/components/search-bar"
-import { CategoryNavigation } from "@/components/category-navigation"
-import { MobileCategoryMenu } from "@/components/mobile-category-menu"
-import { CartSyncIndicator } from "@/components/cart-sync-indicator"
+import { PageHeader } from "@/components/page-header"
+import { ProductCard } from "@/components/product-card"
+import { getCategories, getProducts } from "@/lib/product-api"
 
-export default function HomePage() {
-  const { state, dispatch } = useHybridCart()
+export default async function HomePage() {
+  const { products } = await getProducts({ limit: 8 })
+  const categories = await getCategories()
+  const heroProduct = products[0]
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center space-x-2">
-              <ShoppingBag className="h-6 w-6" />
-              <span className="font-bold text-xl">ModernStore</span>
-            </Link>
-            <div className="hidden lg:block">
-              <CategoryNavigation />
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center space-x-2">
-              <SearchBar className="w-[200px] lg:w-[300px]" />
-            </div>
-            <Button variant="ghost" size="icon">
-              <Heart className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => dispatch({ type: "TOGGLE_CART" })}
-              >
-                <ShoppingBag className="h-5 w-5" />
-                {state.itemCount > 0 && (
-                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">{state.itemCount}</Badge>
-                )}
-              </Button>
-              <CartSyncIndicator />
-            </div>
-            <MobileCategoryMenu />
-          </div>
-        </div>
-      </header>
+      <PageHeader />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -96,8 +55,8 @@ export default function HomePage() {
             <div className="relative">
               <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 p-8">
                 <Image
-                  src="/placeholder.svg?height=500&width=500&text=Hero+Product"
-                  alt="Featured Product"
+                  src={heroProduct.images?.[0]?.url || "/placeholder.svg"}
+                  alt={heroProduct.name}
                   width={500}
                   height={500}
                   className="w-full h-full object-cover rounded-xl"
@@ -164,73 +123,9 @@ export default function HomePage() {
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => {
-              const mockProduct = {
-                id: `featured-${item}`,
-                name: `Premium Product ${item}`,
-                price: Math.floor(Math.random() * 100 + 50),
-                image: `/placeholder.svg?height=300&width=300&text=Product+${item}`,
-                category: "electronics",
-              }
-
-              return (
-                <Card
-                  key={item}
-                  className="group cursor-pointer border-0 shadow-md hover:shadow-xl transition-all duration-300"
-                >
-                  <CardContent className="p-0">
-                    <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-100 relative">
-                      <Image
-                        src={mockProduct.image || "/placeholder.svg"}
-                        alt={mockProduct.name}
-                        width={300}
-                        height={300}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-3 right-3 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Heart className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          dispatch({
-                            type: "ADD_ITEM",
-                            payload: mockProduct,
-                          })
-                        }}
-                        className="absolute bottom-3 left-3 right-3 bg-purple-600 hover:bg-purple-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        Add to Cart
-                      </Button>
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-center gap-1 mb-2">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        ))}
-                        <span className="text-xs text-gray-500 ml-1">(124)</span>
-                      </div>
-                      <h3 className="font-semibold mb-2 group-hover:text-purple-600 transition-colors">
-                        {mockProduct.name}
-                      </h3>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-lg">${mockProduct.price}</span>
-                          <span className="text-sm text-gray-500 line-through">${mockProduct.price + 50}</span>
-                        </div>
-                        <Badge variant="secondary" className="text-xs">
-                          Sale
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
           <div className="text-center mt-12">
             <Button size="lg" variant="outline">
@@ -246,36 +141,40 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Shop by Category</h2>
-            <p className="text-gray-600">Find exactly what you're looking for</p>
+            <p className="text-gray-600">Find exactly what you&apos;re looking for</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { name: "Electronics", image: "Electronics", color: "from-blue-500 to-purple-600" },
-              { name: "Fashion", image: "Fashion", color: "from-pink-500 to-rose-600" },
-              { name: "Home & Garden", image: "Home", color: "from-green-500 to-teal-600" },
-            ].map((category) => (
-              <div key={category.name} className="group cursor-pointer">
-                <div
-                  className={`aspect-[4/3] rounded-2xl bg-gradient-to-br ${category.color} p-8 relative overflow-hidden`}
-                >
-                  <div className="absolute inset-0 bg-black/20" />
-                  <div className="relative z-10 h-full flex flex-col justify-end text-white">
-                    <h3 className="text-2xl font-bold mb-2">{category.name}</h3>
-                    <p className="text-white/80 mb-4">Explore collection</p>
-                    <Button variant="secondary" size="sm" className="w-fit">
-                      Shop Now
-                    </Button>
+            {categories.slice(0, 3).map((category, index) => {
+              const colors = [
+                "from-blue-500 to-purple-600",
+                "from-pink-500 to-rose-600",
+                "from-green-500 to-teal-600",
+              ]
+              return (
+                <div key={category.id} className="group cursor-pointer">
+                  <div
+                    className={`aspect-[4/3] rounded-2xl bg-gradient-to-br ${colors[index % colors.length]
+                      } p-8 relative overflow-hidden`}
+                  >
+                    <div className="absolute inset-0 bg-black/20" />
+                    <div className="relative z-10 h-full flex flex-col justify-end text-white">
+                      <h3 className="text-2xl font-bold mb-2">{category.name}</h3>
+                      <p className="text-white/80 mb-4">Explore collection</p>
+                      <Button variant="secondary" size="sm" className="w-fit">
+                        Shop Now
+                      </Button>
+                    </div>
+                    <Image
+                      src={`/placeholder.svg?height=300&width=400&text=${category.name}`}
+                      alt={category.name}
+                      width={400}
+                      height={300}
+                      className="absolute top-4 right-4 w-32 h-32 object-cover rounded-lg opacity-80 group-hover:scale-110 transition-transform duration-300"
+                    />
                   </div>
-                  <Image
-                    src={`/placeholder.svg?height=300&width=400&text=${category.image}`}
-                    alt={category.name}
-                    width={400}
-                    height={300}
-                    className="absolute top-4 right-4 w-32 h-32 object-cover rounded-lg opacity-80 group-hover:scale-110 transition-transform duration-300"
-                  />
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
