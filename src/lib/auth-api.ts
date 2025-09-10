@@ -1,13 +1,26 @@
 "use server"
 
-import { sql } from "@/lib/db"
+import { prisma } from "@/lib/db"
 import { cookies } from "next/headers"
+
+export interface UserRole {
+  id: string
+  userId: string
+  roleId: string
+  role?: Role
+}
+
+export interface Role {
+  id: string
+  name: string
+}
 
 export interface User {
   id: string
   name: string
   email: string
   avatar?: string
+  roles?: UserRole[]
 }
 
 export interface Order {
@@ -29,7 +42,7 @@ export interface Order {
 export async function createUser(name: string, email: string): Promise<User | null> {
   try {
     // Check if user already exists
-    const existingUser = await sql`
+    const existingUser = await prisma.$queryRaw`
       SELECT id, name, email, avatar FROM users WHERE email = ${email}
     `
 
@@ -43,7 +56,7 @@ export async function createUser(name: string, email: string): Promise<User | nu
     }
 
     // Create new user
-    const newUser = await sql`
+    const newUser = await prisma.$queryRaw`
       INSERT INTO users (name, email)
       VALUES (${name}, ${email})
       RETURNING id, name, email, avatar
@@ -64,7 +77,7 @@ export async function createUser(name: string, email: string): Promise<User | nu
 // Get user by email
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
-    const user = await sql`
+    const user = await prisma.$queryRaw`
       SELECT id, name, email, avatar FROM users WHERE email = ${email}
     `
 
@@ -85,8 +98,8 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 // Get user orders
 export async function getUserOrders(userId: string): Promise<Order[]> {
   try {
-    const orders = await sql`
-      SELECT 
+    const orders = await prisma.$queryRaw`
+      SELECT
         o.id,
         o.created_at as date,
         o.status,
@@ -100,8 +113,8 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
     const ordersWithItems: Order[] = []
 
     for (const order of orders) {
-      const items = await sql`
-        SELECT 
+      const items = await prisma.$queryRaw`
+        SELECT
           product_id as id,
           name,
           quantity,
@@ -117,7 +130,7 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
         status: order.status.toLowerCase() as Order["status"],
         total: order.total,
         trackingNumber: order.tracking_number,
-        items: items.map((item) => ({
+        items: items.map((item: { id: string; name: string; quantity: number; price: number; image?: string }) => ({
           id: item.id,
           name: item.name,
           quantity: item.quantity,
@@ -163,34 +176,34 @@ export async function createOrderFromCart(
   },
 ): Promise<string | null> {
   try {
-    await sql`BEGIN`
+    await prisma.$queryRaw`BEGIN`
 
     // Get user's cart
-    const cart = await sql`
+    const cart = await prisma.$queryRaw`
       SELECT id FROM carts WHERE user_id = ${userId}
     `
 
     if (cart.length === 0) {
-      await sql`ROLLBACK`
+      await prisma.$queryRaw`ROLLBACK`
       return null
     }
 
     const cartId = cart[0].id
 
     // Get cart items
-    const cartItems = await sql`
+    const cartItems = await prisma.$queryRaw`
       SELECT product_id, name, price, image, category, quantity
       FROM cart_items
       WHERE cart_id = ${cartId}
     `
 
     if (cartItems.length === 0) {
-      await sql`ROLLBACK`
+      await prisma.$queryRaw`ROLLBACK`
       return null
     }
 
     // Create order
-    const order = await sql`
+    const order = await prisma.$queryRaw`
       INSERT INTO orders (user_id, status, subtotal, tax, shipping, total)
       VALUES (${userId}, 'PENDING', ${orderData.subtotal}, ${orderData.tax}, ${orderData.shipping}, ${orderData.total})
       RETURNING id
@@ -200,39 +213,39 @@ export async function createOrderFromCart(
 
     // Create order items
     for (const item of cartItems) {
-      await sql`
+      await prisma.$queryRaw`
         INSERT INTO order_items (order_id, product_id, name, price, image, category, quantity)
         VALUES (${orderId}, ${item.product_id}, ${item.name}, ${item.price}, ${item.image}, ${item.category}, ${item.quantity})
       `
     }
 
     // Create shipping address
-    await sql`
+    await prisma.$queryRaw`
       INSERT INTO shipping_addresses (order_id, first_name, last_name, email, phone, address, city, state, zip_code)
-      VALUES (${orderId}, ${orderData.shippingAddress.firstName}, ${orderData.shippingAddress.lastName}, 
+      VALUES (${orderId}, ${orderData.shippingAddress.firstName}, ${orderData.shippingAddress.lastName},
               ${orderData.shippingAddress.email}, ${orderData.shippingAddress.phone}, ${orderData.shippingAddress.address},
               ${orderData.shippingAddress.city}, ${orderData.shippingAddress.state}, ${orderData.shippingAddress.zipCode})
     `
 
     // Create billing address if provided
     if (orderData.billingAddress) {
-      await sql`
+      await prisma.$queryRaw`
         INSERT INTO billing_addresses (order_id, first_name, last_name, address, city, state, zip_code)
         VALUES (${orderId}, ${orderData.billingAddress.firstName}, ${orderData.billingAddress.lastName},
-                ${orderData.billingAddress.address}, ${orderData.billingAddress.city}, 
+                ${orderData.billingAddress.address}, ${orderData.billingAddress.city},
                 ${orderData.billingAddress.state}, ${orderData.billingAddress.zipCode})
       `
     }
 
     // Clear cart
-    await sql`
+    await prisma.$queryRaw`
       DELETE FROM cart_items WHERE cart_id = ${cartId}
     `
 
-    await sql`COMMIT`
+    await prisma.$queryRaw`COMMIT`
     return orderId
   } catch (error) {
-    await sql`ROLLBACK`
+    await prisma.$queryRaw`ROLLBACK`
     console.error("Error creating order:", error)
     return null
   }

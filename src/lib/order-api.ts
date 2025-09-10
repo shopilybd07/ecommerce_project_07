@@ -1,4 +1,40 @@
 import { prisma } from "./prisma"
+import { Prisma } from "@prisma/client"
+
+// Define enums since they're not properly exported from @prisma/client
+export enum OrderStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  SHIPPED = "SHIPPED",
+  DELIVERED = "DELIVERED",
+  CANCELLED = "CANCELLED",
+  FAILED = "FAILED"
+}
+
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  PAID = "PAID",
+  FAILED = "FAILED",
+  REFUNDED = "REFUNDED"
+}
+
+export enum FulfillmentStatus {
+  UNFULFILLED = "UNFULFILLED",
+  FULFILLED = "FULFILLED",
+  PARTIALLY_FULFILLED = "PARTIALLY_FULFILLED",
+  CANCELLED = "CANCELLED"
+}
+
+export enum AddressType {
+  SHIPPING = "SHIPPING",
+  BILLING = "BILLING"
+}
+
+export enum PaymentMethod {
+  CREDIT_CARD = "CREDIT_CARD",
+  PAYPAL = "PAYPAL",
+  BANK_TRANSFER = "BANK_TRANSFER"
+}
 
 export interface CreateOrderData {
   customerId: string
@@ -46,7 +82,8 @@ export interface Order {
   customer: {
     id: string
     email: string
-    name: string | null
+    firstName: string | null
+    lastName: string | null
   }
   shippingAddress: {
     address1: string
@@ -82,7 +119,7 @@ export interface Order {
       sku: string
       images: Array<{
         url: string
-        altText: string | null
+        altText?: string | null
       }>
     }
   }>
@@ -96,13 +133,13 @@ function generateOrderNumber(): string {
 
 export async function createOrder(data: CreateOrderData): Promise<Order> {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Validate customer
-      const customer = await tx.customer.findUnique({
+      const user = await tx.user.findUnique({
         where: { id: data.customerId },
       })
 
-      if (!customer) {
+      if (!user) {
         throw new Error("Customer not found")
       }
 
@@ -113,23 +150,24 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
       for (const item of data.items) {
         const product = await tx.product.findUnique({
           where: { id: item.productId },
+          include: { inventory: true },
         })
 
-        if (!product) {
+        if (!product || !product.inventory) {
           throw new Error(`Product ${item.productId} not found`)
         }
 
-        if (product.stockQuantity < item.quantity) {
+        if (product.inventory.stockQuantity < item.quantity) {
           throw new Error(`Insufficient stock for product ${product.name}`)
         }
 
-        const itemTotal = Number(product.price) * item.quantity
+        const itemTotal = product.price * item.quantity
         subtotal += itemTotal
 
         validatedItems.push({
           productId: item.productId,
           quantity: item.quantity,
-          price: Number(product.price),
+          price: product.price,
           total: itemTotal,
         })
       }
@@ -149,17 +187,17 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
             (!promotion.startsAt || promotion.startsAt <= now) &&
             (!promotion.expiresAt || promotion.expiresAt >= now) &&
             (!promotion.usageLimit || promotion.usedCount < promotion.usageLimit) &&
-            subtotal >= Number(promotion.minOrderAmount)
+            subtotal >= promotion.minOrderAmount
 
           if (isValid) {
             if (promotion.discountType === "PERCENTAGE") {
-              discount = subtotal * (Number(promotion.discountValue) / 100)
+              discount = subtotal * (promotion.discountValue / 100)
             } else {
-              discount = Number(promotion.discountValue)
+              discount = promotion.discountValue
             }
 
             if (promotion.maxDiscountAmount) {
-              discount = Math.min(discount, Number(promotion.maxDiscountAmount))
+              discount = Math.min(discount, promotion.maxDiscountAmount)
             }
 
             promotionId = promotion.id
@@ -182,7 +220,7 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
       const shippingAddress = await tx.address.create({
         data: {
           ...data.shippingAddress,
-          type: "SHIPPING" as AddressType,
+          type: AddressType.SHIPPING,
           customerId: data.customerId,
         },
       })
@@ -193,7 +231,7 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
         billingAddress = await tx.address.create({
           data: {
             ...data.billingAddress,
-            type: "BILLING" as AddressType,
+            type: AddressType.BILLING,
             customerId: data.customerId,
           },
         })
@@ -204,9 +242,9 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
         data: {
           orderNumber: generateOrderNumber(),
           customerId: data.customerId,
-          status: "PENDING",
-          paymentStatus: "PENDING",
-          fulfillmentStatus: "UNFULFILLED",
+          status: OrderStatus.PENDING,
+          paymentStatus: PaymentStatus.PENDING,
+          fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
           paymentMethod: data.paymentMethod,
           subtotal,
           tax,
@@ -230,8 +268,8 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
 
       // Update product stock
       for (const item of validatedItems) {
-        await tx.product.update({
-          where: { id: item.productId },
+        await tx.inventory.update({
+          where: { productId: item.productId },
           data: {
             stockQuantity: {
               decrement: item.quantity,
@@ -262,7 +300,32 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
         })
       }
 
-      return order
+      const newOrder = await tx.order.findUnique({
+        where: { id: order.id },
+        include: {
+          customer: {
+            select: { id: true, email: true, firstName: true, lastName: true },
+          },
+          shippingAddress: true,
+          billingAddress: true,
+          promotion: true,
+          orderItems: {
+            include: {
+              product: {
+                include: {
+                  images: {
+                    take: 1,
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+      if (!newOrder) {
+        throw new Error("Could not fetch newly created order")
+      }
+      return newOrder
     })
   } catch (error) {
     console.error("Error creating order:", error)
@@ -276,7 +339,7 @@ export async function getOrderById(id: string): Promise<Order | null> {
       where: { id },
       include: {
         customer: {
-          select: { id: true, email: true, name: true },
+          select: { id: true, email: true, firstName: true, lastName: true },
         },
         shippingAddress: true,
         billingAddress: true,
@@ -287,7 +350,6 @@ export async function getOrderById(id: string): Promise<Order | null> {
               include: {
                 images: {
                   take: 1,
-                  orderBy: { sortOrder: "asc" },
                 },
               },
             },
@@ -302,26 +364,26 @@ export async function getOrderById(id: string): Promise<Order | null> {
 
     return {
       ...order,
-      subtotal: Number(order.subtotal),
-      tax: Number(order.tax),
-      shipping: Number(order.shipping),
-      discount: Number(order.discount),
-      total: Number(order.total),
+      subtotal: order.subtotal,
+      tax: order.tax,
+      shipping: order.shipping,
+      discount: order.discount,
+      total: order.total,
       promotion: order.promotion
         ? {
           ...order.promotion,
-          discountValue: Number(order.promotion.discountValue),
+          discountValue: order.promotion.discountValue,
         }
         : null,
-      orderItems: order.orderItems.map((item) => ({
+      orderItems: order.orderItems.map((item: any) => ({
         ...item,
-        price: Number(item.price),
-        total: Number(item.total),
+        price: item.price,
+        total: item.total,
         product: {
           ...item.product,
-          images: item.product.images.map((img) => ({
+          images: item.product.images.map((img: { url: string }) => ({
             url: img.url,
-            altText: img.altText,
+            altText: null,
           })),
         },
       })),
@@ -338,7 +400,7 @@ export async function getOrdersByCustomerId(customerId: string): Promise<Order[]
       where: { customerId },
       include: {
         customer: {
-          select: { id: true, email: true, name: true },
+          select: { id: true, email: true, firstName: true, lastName: true },
         },
         shippingAddress: true,
         billingAddress: true,
@@ -349,7 +411,6 @@ export async function getOrdersByCustomerId(customerId: string): Promise<Order[]
               include: {
                 images: {
                   take: 1,
-                  orderBy: { sortOrder: "asc" },
                 },
               },
             },
@@ -359,28 +420,28 @@ export async function getOrdersByCustomerId(customerId: string): Promise<Order[]
       orderBy: { createdAt: "desc" },
     })
 
-    return orders.map((order) => ({
+    return orders.map((order: any) => ({
       ...order,
-      subtotal: Number(order.subtotal),
-      tax: Number(order.tax),
-      shipping: Number(order.shipping),
-      discount: Number(order.discount),
-      total: Number(order.total),
+      subtotal: order.subtotal,
+      tax: order.tax,
+      shipping: order.shipping,
+      discount: order.discount,
+      total: order.total,
       promotion: order.promotion
         ? {
           ...order.promotion,
-          discountValue: Number(order.promotion.discountValue),
+          discountValue: order.promotion.discountValue,
         }
         : null,
-      orderItems: order.orderItems.map((item) => ({
+      orderItems: order.orderItems.map((item: any) => ({
         ...item,
-        price: Number(item.price),
-        total: Number(item.total),
+        price: item.price,
+        total: item.total,
         product: {
           ...item.product,
-          images: item.product.images.map((img) => ({
+          images: item.product.images.map((img: { url: string }) => ({
             url: img.url,
-
+            altText: null,
           })),
         },
       })),
@@ -398,7 +459,11 @@ export async function updateOrderStatus(
   fulfillmentStatus?: FulfillmentStatus,
 ): Promise<Order | null> {
   try {
-    const updateData: any = { status }
+    const updateData: {
+      status: OrderStatus
+      paymentStatus?: PaymentStatus
+      fulfillmentStatus?: FulfillmentStatus
+    } = { status }
 
     if (paymentStatus) {
       updateData.paymentStatus = paymentStatus
@@ -444,7 +509,7 @@ export async function validatePromotion(code: string, subtotal: number) {
       return { valid: false, error: "Promotion usage limit reached" }
     }
 
-    if (subtotal < Number(promotion.minOrderAmount)) {
+    if (subtotal < promotion.minOrderAmount) {
       return {
         valid: false,
         error: `Minimum order amount of $${promotion.minOrderAmount} required`,
@@ -453,22 +518,22 @@ export async function validatePromotion(code: string, subtotal: number) {
 
     let discount = 0
     if (promotion.discountType === "PERCENTAGE") {
-      discount = subtotal * (Number(promotion.discountValue) / 100)
+      discount = subtotal * (promotion.discountValue / 100)
     } else {
-      discount = Number(promotion.discountValue)
+      discount = promotion.discountValue
     }
 
     if (promotion.maxDiscountAmount) {
-      discount = Math.min(discount, Number(promotion.maxDiscountAmount))
+      discount = Math.min(discount, promotion.maxDiscountAmount)
     }
 
     return {
       valid: true,
       promotion: {
         ...promotion,
-        discountValue: Number(promotion.discountValue),
-        minOrderAmount: Number(promotion.minOrderAmount),
-        maxDiscountAmount: promotion.maxDiscountAmount ? Number(promotion.maxDiscountAmount) : null,
+        discountValue: promotion.discountValue,
+        minOrderAmount: promotion.minOrderAmount,
+        maxDiscountAmount: promotion.maxDiscountAmount ? promotion.maxDiscountAmount : null,
       },
       discount,
     }

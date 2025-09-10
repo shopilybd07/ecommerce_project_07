@@ -1,12 +1,8 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -30,9 +26,12 @@ model User {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  roles   UserRole[]
-  Account Account[]
-  Session Session[]
+  roles     UserRole[]
+  Account   Account[]
+  Session   Session[]
+  cart      Cart?
+  orders    Order[]
+  addresses Address[]
 
   @@map("users")
 }
@@ -116,7 +115,6 @@ model Category {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
   subcategories Subcategory[]
   products      Product[]
 
@@ -133,7 +131,6 @@ model Subcategory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
   products Product[]
 
   @@map("subcategories")
@@ -155,9 +152,10 @@ model Product {
   subcategoryId String?
   subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id])
 
-  // Relations
-  images        Image[]
-  inventory     Inventory?
+  images          Image[]
+  inventory       Inventory?
+  orderItems      OrderItem[]
+  cartItems       CartItem[]
 
   @@map("products")
 }
@@ -186,46 +184,154 @@ model Inventory {
   @@map("inventory")
 }
 
-model AssetFolder {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  assets    Asset[]
-
-  @@map("asset_folders")
-}
-
-enum AssetType {
-  IMAGE
-  DOCUMENT
-  VIDEO
-  AUDIO
-  ARCHIVE
-  OTHER
-}
-
-enum AssetUsage {
-  GENERAL
-  BANNER
-  PROFILE
-}
-
-model Asset {
+model Cart {
   id         String     @id @default(cuid())
-  name       String
-  type       AssetType  @default(OTHER)
-  size       Float // in MB
-  url        String
-  fileId     String? // From image provider like ImageKit
-  folderId   String?
-  folder     AssetFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  usage      AssetUsage @default(GENERAL)
-  dimensions String? // "1920x1080"
-  duration   String? // "2:34"
+  customerId String     @unique
+  customer   User       @relation(fields: [customerId], references: [id], onDelete: Cascade)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+  cartItems  CartItem[]
 
-  @@map("assets")
+  @@map("carts")
 }
 
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique
+  customerId        String
+  customer          User        @relation(fields: [customerId], references: [id])
+  status            OrderStatus
+  paymentStatus     PaymentStatus
+  fulfillmentStatus FulfillmentStatus
+  paymentMethod     PaymentMethod
+  subtotal          Float
+  tax               Float
+  shipping          Float
+  discount          Float
+  total             Float
+  notes             String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  shippingAddressId String?
+  shippingAddress   Address?    @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String?
+  billingAddress    Address?    @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  promotionId       String?
+  promotion         Promotion?  @relation(fields: [promotionId], references: [id])
+  orderItems        OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  total     Float
+  createdAt DateTime @default(now())
+
+  @@map("order_items")
+}
+
+model Address {
+  id        String      @id @default(cuid())
+  customerId String
+  customer   User        @relation(fields: [customerId], references: [id])
+  type       AddressType
+  address1   String
+  address2   String?
+  city       String
+  zipCode    String
+  state      String?
+  country    String
+  shippingForOrders Order[] @relation("ShippingAddress")
+  billingForOrders  Order[] @relation("BillingAddress")
+
+  @@map("addresses")
+}
+
+model Promotion {
+  id                  String    @id @default(cuid())
+  code                String    @unique
+  name                String
+  description         String?
+  discountType        String
+  discountValue       Float
+  minOrderAmount      Float     @default(0)
+  maxDiscountAmount   Float?
+  startsAt            DateTime?
+  expiresAt           DateTime?
+  usageLimit          Int?
+  usedCount           Int       @default(0)
+  isActive            Boolean   @default(true)
+  orders              Order[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("promotions")
+}
+
+model InventoryMovement {
+    id          String   @id @default(cuid())
+    productId   String
+    type        String // IN, OUT
+    quantity    Int
+    reason      String
+    referenceId String?
+    createdAt   DateTime @default(now())
+
+    @@map("inventory_movements")
+}
+
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum FulfillmentStatus {
+  UNFULFILLED
+  FULFILLED
+  PARTIALLY_FULFILLED
+  CANCELLED
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+}

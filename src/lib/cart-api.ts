@@ -11,8 +11,8 @@ export interface CartItem {
     sku: string
     images: Array<{
       url: string
-      altText: string | null
-      isPrimary: boolean
+      altText?: string | null
+      isPrimary?: boolean
     }>
   }
 }
@@ -35,7 +35,6 @@ export async function getCart(customerId: string): Promise<Cart | null> {
             product: {
               include: {
                 images: {
-                  orderBy: { sortOrder: "asc" },
                   take: 1,
                 },
               },
@@ -49,23 +48,25 @@ export async function getCart(customerId: string): Promise<Cart | null> {
       return null
     }
 
-    const items: CartItem[] = cart.cartItems.map((item) => ({
+    const items: CartItem[] = cart.cartItems.map((item: any) => ({
       id: item.id,
       productId: item.productId,
       quantity: item.quantity,
       product: {
         id: item.product.id,
         name: item.product.name,
-        price: Number(item.product.price),
+        price: item.product.price,
         sku: item.product.sku,
-        images: item.product.images.map((img) => ({
+        images: item.product.images.map((img: { url: string }) => ({
           url: img.url,
+          altText: null,
+          isPrimary: false,
         })),
       },
     }))
 
-    const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
-    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+    const total = items.reduce((sum: number, item: CartItem) => sum + item.product.price * item.quantity, 0)
+    const itemCount = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0)
 
     return {
       id: cart.id,
@@ -227,7 +228,7 @@ export async function getCartItemCount(customerId: string): Promise<number> {
       return 0
     }
 
-    return cart.cartItems.reduce((sum, item) => sum + item.quantity, 0)
+    return cart.cartItems.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0)
   } catch (error) {
     console.error("Error getting cart item count:", error)
     return 0
