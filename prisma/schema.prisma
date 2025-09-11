@@ -141,7 +141,7 @@ model Subcategory {
 }
 
 model Product {
-  id            String   @id @default(autoincrement())
+  id            String   @id @default(cuid())
   name          String
   sku           String   @unique
   description   String?
@@ -222,6 +222,8 @@ model Order {
   paymentStatus     PaymentStatus
   fulfillmentStatus FulfillmentStatus
   paymentMethod     PaymentMethod
+  transactionId     String?
+  accountNumber     String?
   subtotal          Float
   tax               Float
   shipping          Float
@@ -335,7 +337,7 @@ enum AddressType {
 }
 
 enum PaymentMethod {
-  CREDIT_CARD
-  PAYPAL
-  BANK_TRANSFER
+  CASH_ON_DELIVERY
+  BKASH
+  NAGAD
 }

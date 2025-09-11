@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
       shippingAddress: body.shippingAddress,
       billingAddress: body.billingAddress,
       paymentMethod: body.paymentMethod,
+      transactionId: body.transactionId,
+      accountNumber: body.accountNumber,
       promotionCode: body.promotionCode,
       notes: body.notes,
     }
