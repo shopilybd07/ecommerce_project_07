@@ -31,6 +31,12 @@ export const api = createApi({
         getSubcategoryById: builder.query<any, string>({
             query: (id) => `subcategories/${id}`,
         }),
+        getRelatedProducts: builder.query<any, { productId: string; subcategoryId: string }>({
+            query: ({ productId, subcategoryId }) => ({
+                url: `products/${productId}/related`,
+                params: { subcategoryId },
+            }),
+        }),
     }),
 });
 
@@ -42,4 +48,5 @@ export const {
     useGetCategoryByIdQuery,
     useGetSubcategoriesQuery,
     useGetSubcategoryByIdQuery,
+    useGetRelatedProductsQuery,
 } = api;

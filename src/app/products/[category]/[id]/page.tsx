@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart } from "@/contexts/cart-context"
 import { SearchBar } from "@/components/search-bar"
 import { CategoryNavigation } from "@/components/category-navigation"
-import { useGetProductByIdQuery, useGetProductsQuery } from "@/store/api"
+import { useGetProductByIdQuery, useGetRelatedProductsQuery, useGetSubcategoriesQuery } from "@/store/api"
 
 export default function ProductDetailPage({ params }: { params: { category: string; id: string } }) {
   const { dispatch } = useCart()
@@ -34,16 +34,21 @@ export default function ProductDetailPage({ params }: { params: { category: stri
   const { data: productData, isLoading, isError } = useGetProductByIdQuery(params.id)
   const product = productData?.data
 
-  const { data: relatedProductsData } = useGetProductsQuery(
+  const { data: relatedProductsData } = useGetRelatedProductsQuery(
     {
-      filters: { categoryId: product?.categoryId },
-      pagination: { page: 1, limit: 4, sortBy: "createdAt", sortOrder: "desc" },
+      productId: product?.id,
+      subcategoryId: product?.subcategoryId,
     },
     {
       skip: !product,
     }
   )
-  const relatedProducts = relatedProductsData?.products || []
+  const relatedProducts = relatedProductsData?.data || []
+
+  const { data: subcategoriesData } = useGetSubcategoriesQuery(product?.categoryId, {
+    skip: !product,
+  })
+  const subcategories = subcategoriesData?.data || []
 
   if (isLoading) {
     return <div>Loading...</div>
@@ -104,6 +109,20 @@ export default function ProductDetailPage({ params }: { params: { category: stri
           <span>/</span>
           <span className="text-gray-900 font-medium">{product.name}</span>
         </nav>
+
+        {/* Subcategories */}
+        {subcategories.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4">Subcategories</h2>
+            <div className="flex flex-wrap gap-2">
+              {subcategories.map((subcategory: any) => (
+                <Link key={subcategory.id} href={`/products/${params.category}?subcategory=${subcategory.name.toLowerCase()}`}>
+                  <Badge variant="outline" className="hover:bg-gray-100">{subcategory.name}</Badge>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Product Details */}
         <div className="grid lg:grid-cols-2 gap-12 mb-16">

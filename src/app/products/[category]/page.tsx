@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useGetCategoriesQuery, useGetProductsQuery } from "@/store/api"
 import { ProductCard } from "@/components/product-card"
 import { ShoppingBag } from "lucide-react"
@@ -10,6 +11,9 @@ import { SearchBar } from "@/components/search-bar"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ProductCategoryPage({ params }: { params: { category: string } }) {
+  const searchParams = useSearchParams()
+  const subcategoryName = searchParams.get("subcategory")
+
   const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesQuery()
 
   const category = useMemo(() => {
@@ -18,13 +22,23 @@ export default function ProductCategoryPage({ params }: { params: { category: st
     )
   }, [categoriesData, params.category])
 
+  const subcategory = useMemo(() => {
+    if (!category || !subcategoryName) return null
+    return category.subcategories.find(
+      (s: any) => s.name.toLowerCase() === subcategoryName.toLowerCase()
+    )
+  }, [category, subcategoryName])
+
   const {
     data: productsData,
     isLoading: isLoadingProducts,
     isError,
   } = useGetProductsQuery(
     {
-      filters: { categoryId: category?.id },
+      filters: {
+        categoryId: category?.id,
+        subcategoryId: subcategory?.id,
+      },
       pagination: { page: 1, limit: 12 },
     },
     {

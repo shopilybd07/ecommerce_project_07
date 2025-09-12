@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getProductById } from "@/lib/product-api"
 
+// GET product by ID
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const product = await getProductById(params.id)
