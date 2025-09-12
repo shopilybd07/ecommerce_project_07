@@ -160,12 +160,27 @@ model Product {
   inventory       Inventory?
   orderItems      OrderItem[]
   cartItems       CartItem[]
+  videos          Video[]
+  stockAlerts     StockAlert[]
 
   @@map("products")
 }
 
+model Video {
+  id           String   @id @default(cuid())
+  url          String
+  thumbnailUrl String?
+  fileId       String
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("videos")
+}
+
 model Image {
-  id           String  @id @default(cuid())
+  id           Int  @id @default(autoincrement())
   url          String
   thumbnailUrl String?
   fileId       String
@@ -178,7 +193,7 @@ model Image {
 }
 
 model Inventory {
-  id            String   @id @default(cuid())
+  id            Int   @id @default(autoincrement())
   stockQuantity Int
   productId     String   @unique
   product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -232,9 +247,9 @@ model Order {
   notes             String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
-  shippingAddressId String?
+  shippingAddressId Int?
   shippingAddress   Address?    @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddressId  String?
+  billingAddressId  Int?
   billingAddress    Address?    @relation("BillingAddress", fields: [billingAddressId], references: [id])
   promotionId       String?
   promotion         Promotion?  @relation(fields: [promotionId], references: [id])
@@ -258,7 +273,7 @@ model OrderItem {
 }
 
 model Address {
-  id        String      @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   customerId String
   customer   User        @relation(fields: [customerId], references: [id])
   type       AddressType
@@ -307,6 +322,19 @@ model InventoryMovement {
     @@map("inventory_movements")
 }
 
+model StockAlert {
+  id        String    @id @default(cuid())
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  alertType AlertType
+  threshold Int
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([productId, alertType])
+  @@map("stock_alerts")
+}
 
 enum OrderStatus {
   PENDING
@@ -340,4 +368,14 @@ enum PaymentMethod {
   CASH_ON_DELIVERY
   BKASH
   NAGAD
+}
+
+enum ProductType {
+  PHYSICAL
+  DIGITAL
+}
+
+enum AlertType {
+  LOW_STOCK
+  OUT_OF_STOCK
 }

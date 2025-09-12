@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { HybridCartDrawer } from "@/components/hybrid-cart-drawer"
 import { PageHeader } from "@/components/page-header"
 import { ProductCard } from "@/components/product-card"
-import { getCategories, getProducts } from "@/lib/product-api"
+import { getAllProducts, getCategories } from "@/lib/product-api"
+
 
 export default async function HomePage() {
-  const { products } = await getProducts({ limit: 8 })
+  const products = await getAllProducts()
   const categories = await getCategories()
   const heroProduct = products[0]
 
