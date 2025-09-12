@@ -2,8 +2,14 @@
 
 import prisma from "./prisma"
 
-export async function getAllProducts() {
+export async function getProducts(filters: { categoryId?: string } = {}) {
+  const where: any = {}
+  if (filters.categoryId) {
+    where.categoryId = filters.categoryId
+  }
+
   return prisma.product.findMany({
+    where,
     include: {
       category: true,
       subcategory: true,

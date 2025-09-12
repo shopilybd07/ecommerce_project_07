@@ -1,13 +1,20 @@
-import { NextResponse } from "next/server"
-import { getAllProducts } from "@/lib/product-api"
+import { type NextRequest, NextResponse } from "next/server"
+import { getProducts } from "@/lib/product-api"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const products = await getAllProducts()
+    const { searchParams } = new URL(request.url)
+    const categoryId = searchParams.get("categoryId") || undefined
+
+    const filters = {
+      categoryId,
+    }
+
+    const products = await getProducts(filters)
 
     return NextResponse.json({
       success: true,
-      data: products,
+      products: products,
     })
   } catch (error) {
     console.error("Error in products API:", error)

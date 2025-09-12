@@ -17,7 +17,10 @@ export interface ProductForCard {
 }
 
 export function ProductCard({ product }: { product: ProductForCard }) {
-  const { dispatch } = useHybridCart()
+  const { dispatch } = useHybridCart();
+
+  console.log(product);
+
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()

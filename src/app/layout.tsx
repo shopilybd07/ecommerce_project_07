@@ -5,6 +5,7 @@ import { Poppins } from "next/font/google"
 import { HybridCartProvider } from "@/contexts/hybrid-cart-context"
 import { AuthProvider } from "@/contexts/auth-context";
 import { StoreProvider } from "@/components/StoreProvider";
+import { CartProvider } from "@/contexts/cart-context";
 
 export const metadata: Metadata = {
   title: "v0 App",
@@ -28,7 +29,10 @@ export default function RootLayout({
       <body className={poppins.className}>
         <StoreProvider>
           <AuthProvider>
-            <HybridCartProvider>{children}</HybridCartProvider>
+            <HybridCartProvider>
+              <CartProvider>{children}
+              </CartProvider>
+            </HybridCartProvider>
           </AuthProvider>
         </StoreProvider>
       </body>

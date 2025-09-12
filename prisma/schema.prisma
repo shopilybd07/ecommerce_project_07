@@ -180,12 +180,12 @@ model Video {
 }
 
 model Image {
-  id           Int  @id @default(autoincrement())
+  id           String   @id @default(cuid())
   url          String
   thumbnailUrl String?
   fileId       String
   productId    String
-  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -193,7 +193,7 @@ model Image {
 }
 
 model Inventory {
-  id            Int   @id @default(autoincrement())
+  id            String   @id @default(cuid())
   stockQuantity Int
   productId     String   @unique
   product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -247,9 +247,9 @@ model Order {
   notes             String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
-  shippingAddressId Int?
+  shippingAddressId String?
   shippingAddress   Address?    @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddressId  Int?
+  billingAddressId  String?
   billingAddress    Address?    @relation("BillingAddress", fields: [billingAddressId], references: [id])
   promotionId       String?
   promotion         Promotion?  @relation(fields: [promotionId], references: [id])
@@ -273,7 +273,7 @@ model OrderItem {
 }
 
 model Address {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   customerId String
   customer   User        @relation(fields: [customerId], references: [id])
   type       AddressType
