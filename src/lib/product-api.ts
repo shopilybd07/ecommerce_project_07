@@ -70,3 +70,20 @@ export async function getCategories(includeInactive = false) {
     orderBy: { name: "asc" },
   })
 }
+
+export async function getSubcategories(
+  categoryId?: string,
+  includeInactive = false,
+) {
+  const where: any = {
+    ...(categoryId && { categoryId }),
+    ...(!includeInactive && { status: "ACTIVE" }),
+  }
+
+  return prisma.subcategory.findMany({
+    where,
+    orderBy: {
+      name: "asc",
+    },
+  })
+}

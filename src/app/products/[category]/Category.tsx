@@ -10,9 +10,9 @@ import { CategoryNavigation } from "@/components/category-navigation"
 import { SearchBar } from "@/components/search-bar"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export default function ProductCategoryPage({ categoryName }: { categoryName: string }) {
+export default function ProductCategoryPage({ categoryName, subcategoryName: subcategoryNameProp }: { categoryName: string, subcategoryName?: string }) {
     const searchParams = useSearchParams()
-    const subcategoryName = searchParams.get("subcategory")
+    const subcategoryName = subcategoryNameProp || searchParams.get("subcategory")
 
     const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesQuery()
 
@@ -78,11 +78,19 @@ export default function ProductCategoryPage({ categoryName }: { categoryName: st
                         Products
                     </Link>
                     <span>/</span>
-                    <span className="text-gray-900 font-medium">{categoryNameToDisplay}</span>
+                    <Link href={`/products/${categoryName.toLowerCase()}`} className="hover:text-gray-900">
+                        {categoryNameToDisplay}
+                    </Link>
+                    {subcategoryName && (
+                        <>
+                            <span>/</span>
+                            <span className="text-gray-900 font-medium">{subcategory.name}</span>
+                        </>
+                    )}
                 </nav>
 
                 <h1 className="text-4xl font-extrabold tracking-tight mb-8">
-                    {categoryNameToDisplay} Products
+                    {subcategoryName ? subcategory.name : categoryNameToDisplay} Products
                 </h1>
 
                 {isLoading ? (
