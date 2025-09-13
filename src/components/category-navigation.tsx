@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
-import { ChevronRight, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { useGetCategoriesQuery, useGetSubcategoriesQuery } from "@/store/api"
 
 interface CategoryNavigationProps {
@@ -11,17 +11,15 @@ interface CategoryNavigationProps {
 }
 
 export function CategoryNavigation({ className }: CategoryNavigationProps) {
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { data: categoriesData, isLoading, isError } = useGetCategoriesQuery()
   const categories = categoriesData?.data || []
 
-  const { data: subcategoriesData } = useGetSubcategoriesQuery(hoveredCategory, {
-    skip: !hoveredCategory,
-  })
+  const { data: subcategoriesData } = useGetSubcategoriesQuery(undefined)
   const subcategories = subcategoriesData?.data || []
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div>Loading categories...</div>
   }
 
   if (isError) {
@@ -36,8 +34,8 @@ export function CategoryNavigation({ className }: CategoryNavigationProps) {
         </Link>
         <div
           className="relative"
-          onMouseEnter={() => setHoveredCategory("all")}
-          onMouseLeave={() => setHoveredCategory(null)}
+          onMouseEnter={() => setIsMenuOpen(true)}
+          onMouseLeave={() => setIsMenuOpen(false)}
         >
           <Link
             href="/categories"
@@ -46,7 +44,7 @@ export function CategoryNavigation({ className }: CategoryNavigationProps) {
             Categories <ChevronDown className="h-4 w-4" />
           </Link>
 
-          {hoveredCategory && (
+          {isMenuOpen && (
             <div className="absolute top-full -left-20 mt-2 w-screen max-w-7xl">
               <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-lg shadow-lg z-50 p-8 grid grid-cols-4 gap-8">
                 {categories.map((category: any) => (
@@ -54,7 +52,6 @@ export function CategoryNavigation({ className }: CategoryNavigationProps) {
                     <Link
                       href={`/products/${category.name.toLowerCase()}`}
                       className="font-bold text-lg text-gray-800 hover:text-purple-700 transition-colors flex items-center gap-2"
-                      onMouseEnter={() => setHoveredCategory(category.id)}
                     >
                       {category.name}
                     </Link>
@@ -64,7 +61,7 @@ export function CategoryNavigation({ className }: CategoryNavigationProps) {
                         .map((subcategory: any) => (
                           <Link
                             key={subcategory.id}
-                            href={`/products/${category.name.toLowerCase()}?subcategory=${subcategory.name.toLowerCase()}`}
+                            href={`/products/${category.name.toLowerCase()}/${subcategory.name.toLowerCase()}`}
                             className="block text-gray-600 hover:text-purple-700 transition-colors duration-200 transform hover:translate-x-1"
                           >
                             {subcategory.name}
