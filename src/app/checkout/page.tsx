@@ -11,8 +11,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/contexts/auth-context"
-import { useHybridCart } from "@/contexts/hybrid-cart-context"
 import { useToast } from "@/hooks/use-toast"
+import { useCart } from "@/contexts/cart-context"
 
 interface ShippingAddress {
   address1: string
@@ -35,7 +35,8 @@ interface BillingAddress {
 export default function CheckoutPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { items, clearCart } = useHybridCart()
+  const { state, dispatch } = useCart();
+  const items = state.items;
   const { toast } = useToast()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -121,7 +122,7 @@ export default function CheckoutPage() {
       const result = await response.json()
 
       if (result.success) {
-        await clearCart()
+        dispatch({ type: "CLEAR_CART" })
         toast({
           title: "Order Placed Successfully!",
           description: `Your order ${result.data.orderNumber} has been placed.`,
@@ -448,7 +449,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span>
+                  <span>{shipping === 0 ? "Free" : `${shipping.toFixed(2)}`}</span>
                 </div>
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-bold text-lg">

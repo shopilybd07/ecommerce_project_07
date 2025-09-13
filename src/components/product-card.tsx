@@ -5,8 +5,8 @@ import Link from "next/link"
 import { Star, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useHybridCart } from "@/contexts/hybrid-cart-context"
+import { Badge } from "@/components/ui/badge";
+import { useCart } from "@/contexts/cart-context"
 
 export interface ProductForCard {
   id: string
@@ -17,7 +17,7 @@ export interface ProductForCard {
 }
 
 export function ProductCard({ product }: { product: ProductForCard }) {
-  const { dispatch } = useHybridCart();
+  const { dispatch } = useCart();
 
   console.log(product);
 

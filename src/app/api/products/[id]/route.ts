@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getProductById } from "@/lib/product-api"
+import { getProductById } from "@/lib/product-api";
+import { type NextRequest, NextResponse } from "next/server";
 
 // GET product by ID
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {

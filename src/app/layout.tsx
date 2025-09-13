@@ -29,10 +29,10 @@ export default function RootLayout({
       <body className={poppins.className}>
         <StoreProvider>
           <AuthProvider>
-            <HybridCartProvider>
-              <CartProvider>{children}
-              </CartProvider>
-            </HybridCartProvider>
+            {/* <HybridCartProvider> */}
+            <CartProvider>{children}
+            </CartProvider>
+            {/* </HybridCartProvider> */}
           </AuthProvider>
         </StoreProvider>
       </body>

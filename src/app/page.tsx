@@ -1,19 +1,17 @@
-import { ShoppingBag, Star, Truck, Shield, Headphones, ArrowRight } from "lucide-react"
+import { ShoppingBag, Star, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge"
 import { HybridCartDrawer } from "@/components/hybrid-cart-drawer"
 import { PageHeader } from "@/components/page-header"
 import { ProductCard } from "@/components/product-card"
-import { getProducts, getCategories } from "@/lib/product-api"
+import { getProducts } from "@/lib/product-api"
 
 
 export default async function HomePage() {
-  const products = await getProducts()
-  const categories = await getCategories()
+  const products = await getProducts();
   const heroProduct = products[0]
 
   return (
@@ -79,40 +77,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <Truck className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Free Shipping</h3>
-                <p className="text-sm text-gray-600">On orders over $100</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-green-100 p-3 rounded-full">
-                <Shield className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Secure Payment</h3>
-                <p className="text-sm text-gray-600">100% secure transactions</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-purple-100 p-3 rounded-full">
-                <Headphones className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">24/7 Support</h3>
-                <p className="text-sm text-gray-600">Always here to help</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* Featured Products */}
       <section className="py-20">
@@ -137,69 +102,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Shop by Category</h2>
-            <p className="text-gray-600">Find exactly what you&apos;re looking for</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {categories.slice(0, 3).map((category, index) => {
-              const colors = [
-                "from-blue-500 to-purple-600",
-                "from-pink-500 to-rose-600",
-                "from-green-500 to-teal-600",
-              ]
-              return (
-                <div key={category.id} className="group cursor-pointer">
-                  <div
-                    className={`aspect-[4/3] rounded-2xl bg-gradient-to-br ${colors[index % colors.length]
-                      } p-8 relative overflow-hidden`}
-                  >
-                    <div className="absolute inset-0 bg-black/20" />
-                    <div className="relative z-10 h-full flex flex-col justify-end text-white">
-                      <h3 className="text-2xl font-bold mb-2">{category.name}</h3>
-                      <p className="text-white/80 mb-4">Explore collection</p>
-                      <Button variant="secondary" size="sm" className="w-fit">
-                        Shop Now
-                      </Button>
-                    </div>
-                    <Image
-                      src={`/placeholder.svg?height=300&width=400&text=${category.name}`}
-                      alt={category.name}
-                      width={400}
-                      height={300}
-                      className="absolute top-4 right-4 w-32 h-32 object-cover rounded-lg opacity-80 group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 to-blue-600">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-2xl mx-auto text-white">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Stay in the Loop</h2>
-            <p className="text-purple-100 mb-8">
-              Subscribe to our newsletter and be the first to know about new products, exclusive deals, and special
-              offers.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
-              />
-              <Button className="bg-white text-purple-600 hover:bg-gray-100">Subscribe</Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-16">
@@ -291,7 +193,7 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 ModernStore. All rights reserved.</p>
+            <p>&copy; 2025 Shopilybd. All rights reserved.</p>
           </div>
         </div>
       </footer>

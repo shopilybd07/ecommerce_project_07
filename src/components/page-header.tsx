@@ -4,14 +4,13 @@ import Link from "next/link"
 import { ShoppingBag, User, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useHybridCart } from "@/contexts/hybrid-cart-context"
 import { SearchBar } from "@/components/search-bar"
 import { CategoryNavigation } from "@/components/category-navigation"
-import { MobileCategoryMenu } from "@/components/mobile-category-menu"
-import { CartSyncIndicator } from "@/components/cart-sync-indicator"
+import { MobileCategoryMenu } from "@/components/mobile-category-menu";
+import { useCart } from "@/contexts/cart-context"
 
 export function PageHeader() {
-  const { state, dispatch } = useHybridCart()
+  const { state, dispatch } = useCart()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -47,7 +46,7 @@ export function PageHeader() {
                 <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">{state.itemCount}</Badge>
               )}
             </Button>
-            <CartSyncIndicator />
+            {/* <CartSyncIndicator /> */}
           </div>
           <MobileCategoryMenu />
         </div>

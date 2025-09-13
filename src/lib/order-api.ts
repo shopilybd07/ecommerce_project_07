@@ -516,7 +516,7 @@ export async function validatePromotion(code: string, subtotal: number) {
     if (subtotal < promotion.minOrderAmount) {
       return {
         valid: false,
-        error: `Minimum order amount of $${promotion.minOrderAmount} required`,
+        error: `Minimum order amount of ${promotion.minOrderAmount} required`,
       }
     }
 
