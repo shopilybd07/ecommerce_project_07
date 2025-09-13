@@ -1,32 +1,21 @@
 "use client"
 
-import { X, Plus, Minus, ShoppingBag, Trash2, Wifi, WifiOff, RefreshCw } from "lucide-react"
+import { X, Plus, Minus, ShoppingBag, Trash2, WifiOff } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { useHybridCart } from "@/contexts/hybrid-cart-context"
 import { useAuth } from "@/contexts/auth-context"
+import { useCart } from "@/contexts/cart-context"
 
 export function HybridCartDrawer() {
-  const { state, dispatch, forceSync } = useHybridCart()
+  const { state, dispatch } = useCart()
   const { state: authState } = useAuth()
   const isLoggedIn = !!authState.user
 
   if (!state.isOpen) return null
-
-  const formatLastSync = (timestamp: number | null) => {
-    if (!timestamp) return "Never"
-    const now = Date.now()
-    const diff = now - timestamp
-    const minutes = Math.floor(diff / 60000)
-    const seconds = Math.floor((diff % 60000) / 1000)
-
-    if (minutes > 0) return `${minutes}m ago`
-    return `${seconds}s ago`
-  }
 
   return (
     <>
@@ -47,40 +36,6 @@ export function HybridCartDrawer() {
               <Badge variant="secondary">{state.itemCount}</Badge>
             </div>
             <div className="flex items-center gap-2">
-              {/* Sync Status */}
-              {isLoggedIn && (
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  {state.isSyncing ? (
-                    <>
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                      <span>Syncing...</span>
-                    </>
-                  ) : state.lastSyncTime ? (
-                    <>
-                      <Wifi className="h-3 w-3 text-green-500" />
-                      <span>Synced {formatLastSync(state.lastSyncTime)}</span>
-                    </>
-                  ) : (
-                    <>
-                      <WifiOff className="h-3 w-3 text-orange-500" />
-                      <span>Not synced</span>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Force Sync Button */}
-              {isLoggedIn && !state.isSyncing && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={forceSync}
-                  title="Force sync with server"
-                >
-                  <RefreshCw className="h-3 w-3" />
-                </Button>
-              )}
 
               <Button variant="ghost" size="icon" onClick={() => dispatch({ type: "CLOSE_CART" })}>
                 <X className="h-5 w-5" />
@@ -129,7 +84,7 @@ export function HybridCartDrawer() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-sm truncate">{item.name}</h3>
-                      <p className="text-sm text-gray-600">${item.price}</p>
+                      <p className="text-sm text-gray-600">{item.price} BDT</p>
                       <div className="flex items-center gap-2 mt-2">
                         <Button
                           variant="outline"
@@ -141,7 +96,6 @@ export function HybridCartDrawer() {
                               payload: { id: item.id, quantity: item.quantity - 1 },
                             })
                           }
-                          disabled={state.isSyncing}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -156,20 +110,18 @@ export function HybridCartDrawer() {
                               payload: { id: item.id, quantity: item.quantity + 1 },
                             })
                           }
-                          disabled={state.isSyncing}
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <p className="font-semibold text-sm">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-semibold text-sm">{(item.price * item.quantity).toFixed(2)} BDT</p>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-red-500 hover:text-red-700"
                         onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
-                        disabled={state.isSyncing}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -190,8 +142,8 @@ export function HybridCartDrawer() {
               <Separator />
               <div className="space-y-2">
                 <Link href="/checkout" onClick={() => dispatch({ type: "CLOSE_CART" })}>
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700" disabled={state.isSyncing}>
-                    {state.isSyncing ? "Syncing..." : "Checkout"}
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                    Checkout
                   </Button>
                 </Link>
                 <Button
@@ -201,15 +153,6 @@ export function HybridCartDrawer() {
                 >
                   Continue Shopping
                 </Button>
-              </div>
-
-              {/* Storage Info */}
-              <div className="text-xs text-gray-500 text-center pt-2 border-t">
-                {isLoggedIn ? (
-                  <span>✓ Cart synced across all your devices</span>
-                ) : (
-                  <span>💾 Cart saved locally on this device</span>
-                )}
               </div>
             </div>
           )}

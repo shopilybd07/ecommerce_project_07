@@ -1,149 +1,79 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
-import {
-  ChevronRight,
-  Smartphone,
-  Laptop,
-  Headphones,
-  Watch,
-  Camera,
-  Gamepad2,
-  Shirt,
-  SaladIcon as Dress,
-  FootprintsIcon as Shoe,
-  ShoppingBagIcon as Bag,
-  Gem,
-  Crown,
-  Sofa,
-  Utensils,
-  Flower,
-  Wrench,
-  Lightbulb,
-  Bed,
-} from "lucide-react"
-
-interface SubCategory {
-  name: string
-  href: string
-  icon?: React.ComponentType<{ className?: string }>
-}
-
-interface Category {
-  name: string
-  href: string
-  icon: React.ComponentType<{ className?: string }>
-  subcategories: SubCategory[]
-}
-
-const categories: Category[] = [
-  {
-    name: "Electronics",
-    href: "/products/electronics",
-    icon: Smartphone,
-    subcategories: [
-      { name: "Smartphones", href: "/products/electronics/smartphones", icon: Smartphone },
-      { name: "Laptops", href: "/products/electronics/laptops", icon: Laptop },
-      { name: "Headphones", href: "/products/electronics/headphones", icon: Headphones },
-      { name: "Smart Watches", href: "/products/electronics/smartwatches", icon: Watch },
-      { name: "Cameras", href: "/products/electronics/cameras", icon: Camera },
-      { name: "Gaming", href: "/products/electronics/gaming", icon: Gamepad2 },
-    ],
-  },
-  {
-    name: "Fashion",
-    href: "/products/fashion",
-    icon: Shirt,
-    subcategories: [
-      { name: "Men's Clothing", href: "/products/fashion/mens", icon: Shirt },
-      { name: "Women's Clothing", href: "/products/fashion/womens", icon: Dress },
-      { name: "Shoes", href: "/products/fashion/shoes", icon: Shoe },
-      { name: "Bags & Accessories", href: "/products/fashion/accessories", icon: Bag },
-      { name: "Jewelry", href: "/products/fashion/jewelry", icon: Gem },
-      { name: "Watches", href: "/products/fashion/watches", icon: Crown },
-    ],
-  },
-  {
-    name: "Home & Garden",
-    href: "/products/home",
-    icon: Sofa,
-    subcategories: [
-      { name: "Furniture", href: "/products/home/furniture", icon: Sofa },
-      { name: "Kitchen", href: "/products/home/kitchen", icon: Utensils },
-      { name: "Garden", href: "/products/home/garden", icon: Flower },
-      { name: "Tools", href: "/products/home/tools", icon: Wrench },
-      { name: "Lighting", href: "/products/home/lighting", icon: Lightbulb },
-      { name: "Bedding", href: "/products/home/bedding", icon: Bed },
-    ],
-  },
-]
+import { ChevronDown } from "lucide-react"
+import { useGetCategoriesQuery, useGetSubcategoriesQuery } from "@/store/api"
 
 interface CategoryNavigationProps {
   className?: string
 }
 
 export function CategoryNavigation({ className }: CategoryNavigationProps) {
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { data: categoriesData, isLoading, isError } = useGetCategoriesQuery()
+  const categories = categoriesData?.data || []
+
+  const { data: subcategoriesData } = useGetSubcategoriesQuery(undefined)
+  const subcategories = subcategoriesData?.data || []
+
+  if (isLoading) {
+    return <div>Loading categories...</div>
+  }
+
+  if (isError) {
+    return <div>Error loading categories.</div>
+  }
 
   return (
     <nav className={`relative ${className}`}>
-      <div className="flex items-center space-x-6">
-        {categories.map((category) => {
-          const IconComponent = category.icon
-          return (
-            <div
-              key={category.name}
-              className="relative"
-              onMouseEnter={() => setHoveredCategory(category.name)}
-              onMouseLeave={() => setHoveredCategory(null)}
-            >
-              <Link
-                href={category.href}
-                className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-purple-600 py-2"
-              >
-                <IconComponent className="h-4 w-4" />
-                {category.name}
-                <ChevronRight className="h-3 w-3 opacity-50" />
-              </Link>
+      <div className="flex items-center space-x-8">
+        <Link href="/shop" className="text-sm font-medium transition-colors hover:text-purple-600">
+          Shop
+        </Link>
+        <div
+          className="relative"
+          onMouseEnter={() => setIsMenuOpen(true)}
+          onMouseLeave={() => setIsMenuOpen(false)}
+        >
+          <Link
+            href="/categories"
+            className="flex items-center gap-1 text-sm font-medium transition-colors hover:text-purple-600"
+          >
+            Categories <ChevronDown className="h-4 w-4" />
+          </Link>
 
-              {/* Subcategory Dropdown */}
-              {hoveredCategory === category.name && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <h3 className="font-semibold text-sm text-gray-900">{category.name}</h3>
-                  </div>
-                  <div className="py-2">
-                    {category.subcategories.map((subcategory) => {
-                      const SubIconComponent = subcategory.icon
-                      return (
-                        <Link
-                          key={subcategory.name}
-                          href={subcategory.href}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-purple-600 transition-colors"
-                        >
-                          {SubIconComponent && <SubIconComponent className="h-4 w-4" />}
-                          {subcategory.name}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                  <div className="border-t border-gray-100 pt-2">
+          {isMenuOpen && (
+            <div className="absolute top-full -left-20 mt-2 w-screen max-w-7xl">
+              <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-lg shadow-lg z-50 p-8 grid grid-cols-4 gap-8">
+                {categories.map((category: any) => (
+                  <div key={category.id} className="space-y-4">
                     <Link
-                      href={category.href}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 transition-colors"
+                      href={`/products/${category.name.toLowerCase()}`}
+                      className="font-bold text-lg text-gray-800 hover:text-purple-700 transition-colors flex items-center gap-2"
                     >
-                      View All {category.name}
-                      <ChevronRight className="h-3 w-3" />
+                      {category.name}
                     </Link>
+                    <div className="space-y-3">
+                      {subcategories
+                        .filter((s: any) => s.categoryId === category.id)
+                        .map((subcategory: any) => (
+                          <Link
+                            key={subcategory.id}
+                            href={`/products/${category.name.toLowerCase()}/${subcategory.name.toLowerCase()}`}
+                            className="block text-gray-600 hover:text-purple-700 transition-colors duration-200 transform hover:translate-x-1"
+                          >
+                            {subcategory.name}
+                          </Link>
+                        ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-          )
-        })}
+          )}
+        </div>
       </div>
     </nav>
   )

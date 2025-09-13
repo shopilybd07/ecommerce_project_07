@@ -4,9 +4,12 @@ import "./globals.css";
 import { Poppins } from "next/font/google"
 import { HybridCartProvider } from "@/contexts/hybrid-cart-context"
 import { AuthProvider } from "@/contexts/auth-context";
+import { StoreProvider } from "@/components/StoreProvider";
+import { CartProvider } from "@/contexts/cart-context";
+import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
-  title: "v0 App",
+  title: "Modern Store",
   description: "Created with v0",
   generator: "v0.dev",
 }
@@ -23,11 +26,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={poppins.className}>
-        <AuthProvider>
-          <HybridCartProvider>{children}</HybridCartProvider>
-        </AuthProvider>
+        <StoreProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Header />
+              {children}
+            </CartProvider>
+          </AuthProvider>
+        </StoreProvider>
       </body>
     </html>
   )

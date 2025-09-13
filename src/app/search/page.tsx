@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -21,23 +21,19 @@ export default function SearchPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [sortBy, setSortBy] = useState("relevance")
 
-  const { searchResults, handleSearchChange, isLoading } = useSearch()
+  const { searchResults, isLoading } = useSearch()
   const { dispatch } = useCart()
 
-  useEffect(() => {
-    if (query) {
-      handleSearchChange(query)
-    }
-  }, [query, handleSearchChange])
+  const products = searchResults?.products || []
 
-  const sortedProducts = [...searchResults.products].sort((a, b) => {
+  const sortedProducts = [...products].sort((a, b) => {
     switch (sortBy) {
       case "price-low":
         return a.price - b.price
       case "price-high":
         return b.price - a.price
       case "rating":
-        return b.rating - a.rating
+        return (b.rating || 0) - (a.rating || 0)
       case "name":
         return a.name.localeCompare(b.name)
       default:
@@ -68,9 +64,9 @@ export default function SearchPage() {
         <div className="mb-8">
           {query ? (
             <div>
-              <h1 className="text-2xl font-bold mb-2">Search results for "{query}"</h1>
+              <h1 className="text-2xl font-bold mb-2">Search results for &quot;{query}&quot;</h1>
               <p className="text-gray-600">
-                {isLoading ? "Searching..." : `${searchResults.totalResults} products found`}
+                {isLoading ? "Searching..." : `${searchResults?.total || 0} products found`}
               </p>
             </div>
           ) : (
@@ -82,7 +78,7 @@ export default function SearchPage() {
         </div>
 
         {/* Search Controls */}
-        {searchResults.totalResults > 0 && (
+        {products.length > 0 && (
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
               {/* View Mode Toggle */}
@@ -151,19 +147,19 @@ export default function SearchPage() {
         )}
 
         {/* Search Results */}
-        {!isLoading && searchResults.totalResults > 0 && (
+        {!isLoading && products.length > 0 && (
           <div
             className={viewMode === "grid" ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"}
           >
             {sortedProducts.map((product) => (
-              <Link key={product.id} href={`/products/${product.category}/${product.id}`}>
+              <Link key={product.id} href={`/products/${product.categoryId}/${product.id}`}>
                 <Card className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300">
                   <CardContent className="p-0">
                     {viewMode === "grid" ? (
                       <>
                         <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-50 relative">
                           <Image
-                            src={product.image || "/placeholder.svg"}
+                            src={product.images?.[0]?.url || "/placeholder.svg"}
                             alt={product.name}
                             width={300}
                             height={300}
@@ -185,8 +181,8 @@ export default function SearchPage() {
                                   id: product.id,
                                   name: product.name,
                                   price: product.price,
-                                  image: product.image,
-                                  category: product.category,
+                                  image: product.images?.[0]?.url,
+                                  category: product.categoryId,
                                 },
                               })
                             }}
@@ -202,12 +198,11 @@ export default function SearchPage() {
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`h-3 w-3 ${
-                                  i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                }`}
+                                className={`h-3 w-3 ${i < Math.floor(product.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                  }`}
                               />
                             ))}
-                            <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
+                            <span className="text-xs text-gray-500 ml-1">({product.reviews || 0})</span>
                           </div>
                           <h3 className="font-semibold mb-2 group-hover:text-purple-600 transition-colors line-clamp-2">
                             {product.name}
@@ -224,7 +219,7 @@ export default function SearchPage() {
                       <div className="flex gap-4 p-4">
                         <div className="w-24 h-24 overflow-hidden rounded-lg bg-gray-50 relative flex-shrink-0">
                           <Image
-                            src={product.image || "/placeholder.svg"}
+                            src={product.images?.[0]?.url || "/placeholder.svg"}
                             alt={product.name}
                             width={96}
                             height={96}
@@ -238,12 +233,11 @@ export default function SearchPage() {
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`h-3 w-3 ${
-                                  i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                }`}
+                                className={`h-3 w-3 ${i < Math.floor(product.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                  }`}
                               />
                             ))}
-                            <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
+                            <span className="text-xs text-gray-500 ml-1">({product.reviews || 0})</span>
                           </div>
                           <h3 className="font-semibold mb-1 group-hover:text-purple-600 transition-colors">
                             {product.name}
@@ -264,8 +258,8 @@ export default function SearchPage() {
                                   id: product.id,
                                   name: product.name,
                                   price: product.price,
-                                  image: product.image,
-                                  category: product.category,
+                                  image: product.images?.[0]?.url,
+                                  category: product.categoryId,
                                 },
                               })
                             }}
@@ -288,12 +282,12 @@ export default function SearchPage() {
         )}
 
         {/* No Results */}
-        {!isLoading && query && searchResults.totalResults === 0 && (
+        {!isLoading && query && products.length === 0 && (
           <div className="text-center py-12">
             <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">No results found</h2>
             <p className="text-gray-600 mb-6">
-              We couldn't find any products matching "{query}". Try adjusting your search terms.
+              We couldn&apos;t find any products matching &quot;{query}&quot;. Try adjusting your search terms.
             </p>
             <div className="space-y-4">
               <div>
@@ -323,7 +317,7 @@ export default function SearchPage() {
             <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Start your search</h2>
             <p className="text-gray-600 mb-6">
-              Enter a product name, category, or description to find what you're looking for.
+              Enter a product name, category, or description to find what you&apos;re looking for.
             </p>
             <div className="space-y-4">
               <div>

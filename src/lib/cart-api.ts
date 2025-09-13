@@ -1,4 +1,4 @@
-import { prisma } from "./prisma"
+import prisma from "./prisma"
 
 export interface CartItem {
   id: string
@@ -20,6 +20,12 @@ export interface CartItem {
 export interface Cart {
   id: string
   customerId: string
+  items: CartItem[]
+  total: number
+  itemCount: number
+}
+
+export interface CartData {
   items: CartItem[]
   total: number
   itemCount: number
@@ -232,5 +238,154 @@ export async function getCartItemCount(customerId: string): Promise<number> {
   } catch (error) {
     console.error("Error getting cart item count:", error)
     return 0
+  }
+}
+
+// Function to sync the entire cart to the backend
+export async function syncCartToBackend(userId: string, cartData: CartData): Promise<boolean> {
+  try {
+    // Get or create cart
+    let cart = await prisma.cart.findUnique({
+      where: { customerId: userId },
+    })
+
+    if (!cart) {
+      cart = await prisma.cart.create({
+        data: { customerId: userId },
+      })
+    }
+
+    // Delete all existing items
+    await prisma.cartItem.deleteMany({
+      where: { cartId: cart.id },
+    })
+
+    // Add all items from cartData
+    for (const item of cartData.items) {
+      await prisma.cartItem.create({
+        data: {
+          cartId: cart.id,
+          productId: item.product.id,
+          quantity: item.quantity,
+        },
+      })
+    }
+
+    return true
+  } catch (error) {
+    console.error("Error syncing cart to backend:", error)
+    return false
+  }
+}
+
+// Function to add a single item to the backend cart
+export async function addItemToBackendCart(userId: string, item: Partial<CartItem> & { id: string }): Promise<boolean> {
+  try {
+    // In the context, this is called with { ...action.payload, quantity: 1 }
+    // where action.payload is Omit<CartItem, "quantity">
+    const result = await addToCart(userId, item.id, item.quantity || 1)
+    return !!result
+  } catch (error) {
+    console.error("Error adding item to backend cart:", error)
+    return false
+  }
+}
+
+// Function to update an item's quantity in the backend cart
+export async function updateItemInBackendCart(userId: string, itemId: string, quantity: number): Promise<boolean> {
+  try {
+    // In the context, itemId is the item.id, not the product.id
+    const result = await updateCartItem(userId, itemId, quantity)
+    return !!result
+  } catch (error) {
+    console.error("Error updating item in backend cart:", error)
+    return false
+  }
+}
+
+// Function to remove an item from the backend cart
+export async function removeItemFromBackendCart(userId: string, itemId: string): Promise<boolean> {
+  try {
+    // In the context, itemId is the item.id, not the product.id
+    const result = await removeFromCart(userId, itemId)
+    return !!result
+  } catch (error) {
+    console.error("Error removing item from backend cart:", error)
+    return false
+  }
+}
+
+// Function to clear the entire backend cart
+export async function clearBackendCart(userId: string): Promise<boolean> {
+  try {
+    return await clearCart(userId)
+  } catch (error) {
+    console.error("Error clearing backend cart:", error)
+    return false
+  }
+}
+
+// Function to merge a local cart with a backend cart when a user logs in
+export async function mergeCartsOnLogin(userId: string, localCartData: CartData): Promise<CartData> {
+  try {
+    // Get backend cart
+    const backendCart = await getCart(userId)
+
+    if (!backendCart) {
+      // If no backend cart exists, just sync the local cart
+      await syncCartToBackend(userId, localCartData)
+      return localCartData
+    }
+
+    // Convert backend cart to CartData format
+    const backendCartData: CartData = {
+      items: backendCart.items,
+      total: backendCart.total,
+      itemCount: backendCart.itemCount,
+    }
+
+    // Create a map of product IDs to items for easier merging
+    const mergedItemsMap = new Map<string, CartItem>()
+
+    // Add backend items to the map
+    for (const item of backendCartData.items) {
+      mergedItemsMap.set(item.product.id, { ...item })
+    }
+
+    // Merge local items, adding quantities for existing items
+    for (const localItem of localCartData.items) {
+      const existingItem = mergedItemsMap.get(localItem.product.id)
+
+      if (existingItem) {
+        // Update quantity if item exists
+        existingItem.quantity += localItem.quantity
+      } else {
+        // Add new item if it doesn't exist
+        mergedItemsMap.set(localItem.product.id, { ...localItem })
+      }
+    }
+
+    // Convert map back to array
+    const mergedItems = Array.from(mergedItemsMap.values())
+
+    // Calculate new totals
+    const total = mergedItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+    const itemCount = mergedItems.reduce((sum, item) => sum + item.quantity, 0)
+
+    // Create merged cart data
+    const mergedCartData: CartData = {
+      items: mergedItems,
+      total,
+      itemCount,
+    }
+
+    // Sync merged cart to backend
+    await syncCartToBackend(userId, mergedCartData)
+
+    return mergedCartData
+  } catch (error) {
+    console.error("Error merging carts on login:", error)
+    // Return local cart data as fallback
+    return localCartData
   }
 }

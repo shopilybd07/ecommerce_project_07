@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/contexts/auth-context"
-import { useHybridCart } from "@/contexts/hybrid-cart-context"
 import { useToast } from "@/hooks/use-toast"
+import { useCart } from "@/contexts/cart-context"
 
 interface ShippingAddress {
   address1: string
@@ -34,7 +35,8 @@ interface BillingAddress {
 export default function CheckoutPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { items, clearCart } = useHybridCart()
+  const { state, dispatch } = useCart();
+  const items = state.items;
   const { toast } = useToast()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -60,6 +62,8 @@ export default function CheckoutPage() {
   })
 
   const [paymentMethod, setPaymentMethod] = useState<string>("")
+  const [transactionId, setTransactionId] = useState("")
+  const [accountNumber, setAccountNumber] = useState("")
   const [promotionCode, setPromotionCode] = useState("")
   const [notes, setNotes] = useState("")
 
@@ -101,6 +105,8 @@ export default function CheckoutPage() {
         shippingAddress,
         billingAddress: useBillingAsShipping ? undefined : billingAddress,
         paymentMethod: paymentMethod as any,
+        transactionId: transactionId || undefined,
+        accountNumber: accountNumber || undefined,
         promotionCode: promotionCode || undefined,
         notes: notes || undefined,
       }
@@ -116,7 +122,7 @@ export default function CheckoutPage() {
       const result = await response.json()
 
       if (result.success) {
-        await clearCart()
+        dispatch({ type: "CLEAR_CART" })
         toast({
           title: "Order Placed Successfully!",
           description: `Your order ${result.data.orderNumber} has been placed.`,
@@ -328,18 +334,46 @@ export default function CheckoutPage() {
               {step >= 3 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Payment Method</h3>
-                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select payment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CREDIT_CARD">Credit Card</SelectItem>
-                      <SelectItem value="DEBIT_CARD">Debit Card</SelectItem>
-                      <SelectItem value="PAYPAL">PayPal</SelectItem>
-                      <SelectItem value="APPLE_PAY">Apple Pay</SelectItem>
-                      <SelectItem value="GOOGLE_PAY">Google Pay</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="CASH_ON_DELIVERY" id="cod" />
+                      <Label htmlFor="cod">Cash On Delivery</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="BKASH" id="bkash" />
+                      <Label htmlFor="bkash">Bkash</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="NAGAD" id="nagad" />
+                      <Label htmlFor="nagad">Nagad</Label>
+                    </div>
+                  </RadioGroup>
+
+                  {(paymentMethod === "BKASH" || paymentMethod === "NAGAD") && (
+                    <div className="space-y-4 rounded-md border bg-gray-50 p-4">
+                      <p className="text-sm text-gray-600">
+                        Please complete your {paymentMethod} payment and provide the transaction details below.
+                      </p>
+                      <div>
+                        <Label htmlFor="transactionId">Transaction ID</Label>
+                        <Input
+                          id="transactionId"
+                          value={transactionId}
+                          onChange={(e) => setTransactionId(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="accountNumber">Account Number</Label>
+                        <Input
+                          id="accountNumber"
+                          value={accountNumber}
+                          onChange={(e) => setAccountNumber(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <Label htmlFor="promotion-code">Promotion Code (Optional)</Label>
@@ -415,7 +449,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span>
+                  <span>{shipping === 0 ? "Free" : `${shipping.toFixed(2)}`}</span>
                 </div>
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-bold text-lg">

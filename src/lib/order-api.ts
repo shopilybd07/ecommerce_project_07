@@ -1,4 +1,4 @@
-import { prisma } from "./prisma"
+import prisma from "./prisma"
 import { Prisma } from "@prisma/client"
 
 // Define enums since they're not properly exported from @prisma/client
@@ -31,9 +31,9 @@ export enum AddressType {
 }
 
 export enum PaymentMethod {
-  CREDIT_CARD = "CREDIT_CARD",
-  PAYPAL = "PAYPAL",
-  BANK_TRANSFER = "BANK_TRANSFER"
+  CASH_ON_DELIVERY = "CASH_ON_DELIVERY",
+  BKASH = "BKASH",
+  NAGAD = "NAGAD"
 }
 
 export interface CreateOrderData {
@@ -60,6 +60,8 @@ export interface CreateOrderData {
     country: string
   }
   paymentMethod: PaymentMethod
+  transactionId?: string
+  accountNumber?: string
   promotionCode?: string
   notes?: string
 }
@@ -246,6 +248,8 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
           paymentStatus: PaymentStatus.PENDING,
           fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
           paymentMethod: data.paymentMethod,
+          transactionId: data.transactionId,
+          accountNumber: data.accountNumber,
           subtotal,
           tax,
           shipping,
@@ -512,7 +516,7 @@ export async function validatePromotion(code: string, subtotal: number) {
     if (subtotal < promotion.minOrderAmount) {
       return {
         valid: false,
-        error: `Minimum order amount of $${promotion.minOrderAmount} required`,
+        error: `Minimum order amount of ${promotion.minOrderAmount} required`,
       }
     }
 

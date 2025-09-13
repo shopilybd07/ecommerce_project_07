@@ -30,7 +30,7 @@ type CartAction =
   | { type: "CLOSE_CART" }
   | { type: "SET_CART_DATA"; payload: CartData }
   | { type: "SET_SYNCING"; payload: boolean }
-  | { type: "SET_LAST_SYNC_TIME"; payload: number }
+  | { type: "SET_LAST_SYNC_TIME"; payload: number | null }
 
 const CartContext = createContext<{
   state: CartState
@@ -56,7 +56,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         newItems = [...state.items, { ...action.payload, quantity: 1 }]
       }
 
-      const total = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+      const total = newItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
       const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0)
 
       return {
@@ -70,7 +70,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
     case "REMOVE_ITEM": {
       const newItems = state.items.filter((item) => item.id !== action.payload)
-      const total = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+      const total = newItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
       const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0)
 
       return {
@@ -89,7 +89,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       const newItems = state.items.map((item) =>
         item.id === action.payload.id ? { ...item, quantity: action.payload.quantity } : item,
       )
-      const total = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+      const total = newItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
       const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0)
 
       return {
