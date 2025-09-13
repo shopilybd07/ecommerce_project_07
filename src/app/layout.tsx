@@ -6,9 +6,10 @@ import { HybridCartProvider } from "@/contexts/hybrid-cart-context"
 import { AuthProvider } from "@/contexts/auth-context";
 import { StoreProvider } from "@/components/StoreProvider";
 import { CartProvider } from "@/contexts/cart-context";
+import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
-  title: "v0 App",
+  title: "Modern Store",
   description: "Created with v0",
   generator: "v0.dev",
 }
@@ -29,10 +30,10 @@ export default function RootLayout({
       <body className={poppins.className}>
         <StoreProvider>
           <AuthProvider>
-            {/* <HybridCartProvider> */}
-            <CartProvider>{children}
+            <CartProvider>
+              <Header />
+              {children}
             </CartProvider>
-            {/* </HybridCartProvider> */}
           </AuthProvider>
         </StoreProvider>
       </body>
