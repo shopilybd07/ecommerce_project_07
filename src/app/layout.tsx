@@ -1,17 +1,15 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css";
-import { Poppins } from "next/font/google"
-import { HybridCartProvider } from "@/contexts/hybrid-cart-context"
+import { Poppins } from "next/font/google";
 import { AuthProvider } from "@/contexts/auth-context";
 import { StoreProvider } from "@/components/StoreProvider";
 import { CartProvider } from "@/contexts/cart-context";
 import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
-  title: "Modern Store",
-  description: "Created with v0",
-  generator: "v0.dev",
+  title: "Shopilybd",
+  description: "Your daily ecommerce solution",
 }
 
 const poppins = Poppins({
@@ -31,7 +29,7 @@ export default function RootLayout({
         <StoreProvider>
           <AuthProvider>
             <CartProvider>
-              <Header />
+              {/* <Header /> */}
               {children}
             </CartProvider>
           </AuthProvider>

@@ -1,6 +1,16 @@
-import { prisma } from "./prisma"
+import prisma from "./prisma"
 import { ablyRest, CHANNELS } from "./ably"
-import type { MessageType, MessageStatus, UserRole } from "@prisma/client"
+import { UserRole } from "@/generated/prisma"
+
+export type MessageType = {
+  text?: string
+  image?: string
+}
+
+export type MessageStatus = {
+  seen?: boolean
+  delivered?: boolean
+}
 
 export interface CreateMessageData {
   content: string

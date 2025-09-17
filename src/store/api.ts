@@ -1,17 +1,30 @@
+import { Product } from '@/types/product';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+export interface ApiResponse<T> {
+    success: boolean;
+    data: T;
+    message?: string;
+}
 
 export const api = createApi({
     reducerPath: 'api',
     baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
     endpoints: (builder) => ({
         getProducts: builder.query({
-            query: ({ filters, pagination }) => ({
+            query: () => ({
                 url: 'products',
-                params: { ...filters, ...pagination },
+                // params: { ...filters, ...pagination },
             }),
         }),
-        getProductById: builder.query({
+        getProductById: builder.query<Product, string>({
             query: (id) => `products/${id}`,
+            transformResponse: (response: ApiResponse<Product>) => {
+                if (response.success) {
+                    return response.data; // ✅ only return data if success
+                }
+                throw new Error(response.message || "Failed to fetch product"); // ❌ throw error if not success
+            },
         }),
         searchProducts: builder.query({
             query: ({ query, filters, pagination }) => ({
