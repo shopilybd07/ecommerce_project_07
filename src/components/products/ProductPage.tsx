@@ -78,14 +78,7 @@ export default function ProductPage({
     availability: ["In Stock", "On Sale", "New Arrivals", "Free Shipping"],
   }
 
-  const { data: productsData, isLoading: isLoadingProducts, isError } = useGetProductsQuery({
-    filters: {
-      categoryId: category?.id,
-      subcategoryId: subcategory?.id,
-      ...filters,
-    },
-    sortBy,
-  })
+  const { data: productsData, isLoading: isLoadingProducts, isError } = useGetProductsQuery()
 
   const products = productsData?.products || []
 
@@ -331,9 +324,8 @@ export default function ProductPage({
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`h-3 w-3 ${
-                                  i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                }`}
+                                className={`h-3 w-3 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                  }`}
                               />
                             ))}
                             <span className="ml-1">& up</span>
@@ -478,9 +470,8 @@ export default function ProductPage({
               {products.map((product: any) => (
                 <Link
                   key={product.id}
-                  href={`/products/${product.category.name.toLowerCase()}/${product.subcategory.name.toLowerCase()}/${
-                    product.id
-                  }`}
+                  href={`/products/${product.category.name.toLowerCase()}/${product.subcategory.name.toLowerCase()}/${product.id
+                    }`}
                 >
                   <Card className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300">
                     <CardContent className="p-0">
@@ -527,11 +518,10 @@ export default function ProductPage({
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-3 w-3 ${
-                                    i < Math.floor(product.rating)
+                                  className={`h-3 w-3 ${i < Math.floor(product.rating)
                                       ? "fill-yellow-400 text-yellow-400"
                                       : "text-gray-300"
-                                  }`}
+                                    }`}
                                 />
                               ))}
                               <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
@@ -571,11 +561,10 @@ export default function ProductPage({
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-3 w-3 ${
-                                    i < Math.floor(product.rating)
+                                  className={`h-3 w-3 ${i < Math.floor(product.rating)
                                       ? "fill-yellow-400 text-yellow-400"
                                       : "text-gray-300"
-                                  }`}
+                                    }`}
                                 />
                               ))}
                               <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>

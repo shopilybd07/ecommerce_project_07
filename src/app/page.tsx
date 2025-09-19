@@ -53,13 +53,13 @@ export default async function HomePage() {
             </div>
             <div className="relative">
               <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 p-8">
-                <Image
+                {/* <Image
                   src={heroProduct.images?.[0]?.url || "/placeholder.svg"}
                   alt={heroProduct.name}
                   width={500}
                   height={500}
                   className="w-full h-full object-cover rounded-xl"
-                />
+                /> */}
               </div>
               <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl p-6 shadow-2xl">
                 <div className="flex items-center gap-3">
