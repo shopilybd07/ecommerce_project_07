@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { markConversationAsRead } from "@/lib/messaging-api"
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 
 export async function POST(request: NextRequest, { params }: { params: { conversationId: string } }) {
   try {
