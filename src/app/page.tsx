@@ -1,5 +1,4 @@
-import { ShoppingBag, Star, ArrowRight } from "lucide-react"
-import Image from "next/image"
+import { ShoppingBag, ArrowRight } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button";
@@ -8,11 +7,11 @@ import { HybridCartDrawer } from "@/components/hybrid-cart-drawer"
 import { PageHeader } from "@/components/page-header"
 import { ProductCard } from "@/components/product-card"
 import { getProducts } from "@/lib/product-api"
+import { HeroCarousel } from "@/components/hero-carousel";
 
 
 export default async function HomePage() {
   const products = await getProducts();
-  const heroProduct = products[0]
 
   return (
     <div className="min-h-screen bg-white">
@@ -52,26 +51,7 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 p-8">
-                <Image
-                  src={heroProduct.images?.[0]?.url || "/placeholder.svg"}
-                  alt={heroProduct.name}
-                  width={500}
-                  height={500}
-                  className="w-full h-full object-cover rounded-xl"
-                />
-              </div>
-              <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl p-6 shadow-2xl">
-                <div className="flex items-center gap-3">
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-current" />
-                    ))}
-                  </div>
-                  <span className="font-semibold">4.9/5</span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">2,847 reviews</p>
-              </div>
+              <HeroCarousel />
             </div>
           </div>
         </div>
