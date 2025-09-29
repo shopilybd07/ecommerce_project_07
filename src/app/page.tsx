@@ -1,13 +1,12 @@
 import { ShoppingBag, Star, ArrowRight } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge"
 import { HybridCartDrawer } from "@/components/hybrid-cart-drawer"
 import { PageHeader } from "@/components/page-header"
 import { ProductCard } from "@/components/product-card"
 import { getProducts } from "@/lib/product-api"
+import { HomeCarousel } from "@/components/home-carousel";
 
 
 export default async function HomePage() {
@@ -17,72 +16,12 @@ export default async function HomePage() {
   } catch (error) {
     console.error("Failed to fetch products, using empty array.", error);
   }
-  const heroProduct = products.length > 0 ? products[0] : null;
 
   return (
     <div className="min-h-screen bg-white">
       <PageHeader />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="container mx-auto px-4 py-24 md:py-32 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="text-white space-y-8">
-              <div className="space-y-4">
-                <Badge className="bg-white/10 text-white border-white/20">New Collection</Badge>
-                <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-                  Discover Your
-                  <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    {" "}
-                    Style
-                  </span>
-                </h1>
-                <p className="text-xl text-gray-300 max-w-lg">
-                  Explore our curated collection of premium products designed for the modern lifestyle.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-white text-black hover:bg-gray-100">
-                  Shop Now
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-white text-white hover:bg-white hover:text-black bg-transparent"
-                >
-                  View Collection
-                </Button>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 p-8">
-                {heroProduct && (
-                  <Image
-                    src={heroProduct.images?.[0]?.url || "/placeholder.svg"}
-                    alt={heroProduct.name}
-                    width={500}
-                    height={500}
-                    className="w-full h-full object-cover rounded-xl"
-                  />
-                )}
-              </div>
-              <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl p-6 shadow-2xl">
-                <div className="flex items-center gap-3">
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-current" />
-                    ))}
-                  </div>
-                  <span className="font-semibold">4.9/5</span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">2,847 reviews</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomeCarousel />
 
 
 
