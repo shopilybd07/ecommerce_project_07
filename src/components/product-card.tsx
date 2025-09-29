@@ -11,16 +11,15 @@ import { useCart } from "@/contexts/cart-context"
 export interface ProductForCard {
   id: string
   name: string
+  slug: string
   price: number
   images: { url: string }[]
   category: { name: string }
+  subcategory: { name: string }
 }
 
 export function ProductCard({ product }: { product: ProductForCard }) {
   const { dispatch } = useCart();
-
-  console.log(product);
-
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -39,7 +38,7 @@ export function ProductCard({ product }: { product: ProductForCard }) {
 
   return (
     <Card className="group cursor-pointer border-0 shadow-md hover:shadow-xl transition-all duration-300">
-      <Link href={`/products/${product.id}`} passHref>
+      <Link href={`/products/${product.category.name.toLowerCase()}/${product.subcategory.name.toLowerCase()}/${product.slug}`} passHref>
         <CardContent className="p-0">
           <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-100 relative">
             <Image

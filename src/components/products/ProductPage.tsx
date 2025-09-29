@@ -470,8 +470,7 @@ export default function ProductPage({
               {products.map((product: any) => (
                 <Link
                   key={product.id}
-                  href={`/products/${product.category.name.toLowerCase()}/${product.subcategory.name.toLowerCase()}/${product.id
-                    }`}
+                  href={`/products/${product.category.name.toLowerCase()}/${product.subcategory.name.toLowerCase()}/${product.slug}`}
                 >
                   <Card className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300">
                     <CardContent className="p-0">
