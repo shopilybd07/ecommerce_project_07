@@ -44,8 +44,8 @@ export function ProductCard({ product }: { product: ProductForCard }) {
             <Image
               src={product.images?.[0]?.url || "/placeholder.svg"}
               alt={product.name}
-              width={300}
-              height={300}
+              width={200}
+              height={200}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
             <Button

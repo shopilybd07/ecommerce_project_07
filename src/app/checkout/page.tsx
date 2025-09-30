@@ -19,8 +19,6 @@ interface ShippingAddress {
   address2: string
   city: string
   zipCode: string
-  state: string
-  country: string
 }
 
 interface BillingAddress {
@@ -28,8 +26,6 @@ interface BillingAddress {
   address2: string
   city: string
   zipCode: string
-  state: string
-  country: string
 }
 
 export default function CheckoutPage() {
@@ -48,8 +44,6 @@ export default function CheckoutPage() {
     address2: "",
     city: "",
     zipCode: "",
-    state: "",
-    country: "US",
   })
 
   const [billingAddress, setBillingAddress] = useState<BillingAddress>({
@@ -57,8 +51,6 @@ export default function CheckoutPage() {
     address2: "",
     city: "",
     zipCode: "",
-    state: "",
-    country: "US",
   })
 
   const [paymentMethod, setPaymentMethod] = useState<string>("")
@@ -74,14 +66,14 @@ export default function CheckoutPage() {
   const total = subtotal + tax + shipping
 
   const handleSubmitOrder = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to place an order.",
-        variant: "destructive",
-      })
-      return
-    }
+    // if (!user) {
+    //   toast({
+    //     title: "Authentication Required",
+    //     description: "Please log in to place an order.",
+    //     variant: "destructive",
+    //   })
+    //   return
+    // }
 
     if (items.length === 0) {
       toast({
@@ -96,7 +88,6 @@ export default function CheckoutPage() {
 
     try {
       const orderData = {
-        customerId: user.id,
         items: items.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -143,19 +134,19 @@ export default function CheckoutPage() {
     }
   }
 
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-            <p className="text-gray-600 mb-6">Please log in to continue with checkout.</p>
-            <Button onClick={() => router.push("/login")}>Go to Login</Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // if (!user) {
+  //   return (
+  //     <div className="container mx-auto px-4 py-8">
+  //       <Card>
+  //         <CardContent className="p-8 text-center">
+  //           <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+  //           <p className="text-gray-600 mb-6">Please log in to continue with checkout.</p>
+  //           <Button onClick={() => router.push("/login")}>Go to Login</Button>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   )
+  // }
 
   if (items.length === 0) {
     return (
@@ -221,30 +212,6 @@ export default function CheckoutPage() {
                         required
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="shipping-state">State</Label>
-                      <Input
-                        id="shipping-state"
-                        value={shippingAddress.state}
-                        onChange={(e) => setShippingAddress((prev) => ({ ...prev, state: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="shipping-country">Country</Label>
-                      <Select
-                        value={shippingAddress.country}
-                        onValueChange={(value) => setShippingAddress((prev) => ({ ...prev, country: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="US">United States</SelectItem>
-                          <SelectItem value="CA">Canada</SelectItem>
-                          <SelectItem value="MX">Mexico</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                 </div>
               )}
@@ -299,30 +266,6 @@ export default function CheckoutPage() {
                             onChange={(e) => setBillingAddress((prev) => ({ ...prev, zipCode: e.target.value }))}
                             required
                           />
-                        </div>
-                        <div>
-                          <Label htmlFor="billing-state">State</Label>
-                          <Input
-                            id="billing-state"
-                            value={billingAddress.state}
-                            onChange={(e) => setBillingAddress((prev) => ({ ...prev, state: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="billing-country">Country</Label>
-                          <Select
-                            value={billingAddress.country}
-                            onValueChange={(value) => setBillingAddress((prev) => ({ ...prev, country: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="US">United States</SelectItem>
-                              <SelectItem value="CA">Canada</SelectItem>
-                              <SelectItem value="MX">Mexico</SelectItem>
-                            </SelectContent>
-                          </Select>
                         </div>
                       </div>
                     </>

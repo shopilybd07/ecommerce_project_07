@@ -5,9 +5,6 @@ import prisma from "./prisma"
 export async function getBannerAssets() {
   try {
     const banners = await prisma.asset.findMany({
-      where: {
-        usage: "BANNER",
-      },
       orderBy: {
         createdAt: "desc",
       },
