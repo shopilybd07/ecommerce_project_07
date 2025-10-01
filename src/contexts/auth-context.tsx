@@ -42,7 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const user = await getAuthCookie()
         if (user) {
-          const orders = await getUserOrders(user.id)
+          // const orders = await getUserOrders(user.id)
+          const orders: Order[] = [] // Mock orders
           setState({
             user,
             orders,
