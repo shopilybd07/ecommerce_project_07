@@ -2,6 +2,8 @@
 
 import type React from "react"
 import { createContext, useContext, useReducer, useEffect } from "react"
+import { useAuth } from "./auth-context"
+import { useModal } from "./modal-context"
 
 interface CartItem {
   id: string
@@ -31,6 +33,7 @@ type CartAction =
 const CartContext = createContext<{
   state: CartState
   dispatch: React.Dispatch<CartAction>
+  addToCart: (item: Omit<CartItem, "quantity">) => void
 } | null>(null)
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
@@ -138,6 +141,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     itemCount: 0,
   })
 
+  const {
+    state: { user },
+  } = useAuth()
+  const { openModal } = useModal()
+
+  const addToCart = (item: Omit<CartItem, "quantity">) => {
+    if (user) {
+      dispatch({ type: "ADD_ITEM", payload: item })
+    } else {
+      openModal()
+    }
+  }
+
   // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem("cart")
@@ -156,7 +172,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("cart", JSON.stringify({ items: state.items }))
   }, [state.items])
 
-  return <CartContext.Provider value={{ state, dispatch }}>{children}</CartContext.Provider>
+  return <CartContext.Provider value={{ state, dispatch, addToCart }}>{children}</CartContext.Provider>
 }
 
 export function useCart() {
