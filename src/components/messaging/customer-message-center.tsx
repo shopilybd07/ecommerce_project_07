@@ -69,15 +69,15 @@ export function CustomerMessageCenter() {
     }
   }
 
-  if (!state.user) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <p>Please log in to access customer support</p>
-        </CardContent>
-      </Card>
-    )
-  }
+  // if (!state.user) {
+  //   return (
+  //     <Card>
+  //       <CardContent className="p-6 text-center">
+  //         <p>Please log in to access customer support</p>
+  //       </CardContent>
+  //     </Card>
+  //   )
+  // }
 
   // For customers, we'll show a single conversation interface
   const activeConversation = conversations[0] // Most recent conversation
@@ -125,9 +125,8 @@ export function CustomerMessageCenter() {
                   className={`flex ${message.senderId === state.user?.id ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
-                      message.senderId === state.user?.id ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
-                    }`}
+                    className={`max-w-[70%] rounded-lg p-3 ${message.senderId === state.user?.id ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
+                      }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-medium">
@@ -139,9 +138,8 @@ export function CustomerMessageCenter() {
                     </div>
                     <p className="text-sm">{message.content}</p>
                     <p
-                      className={`text-xs mt-1 ${
-                        message.senderId === state.user?.id ? "text-blue-100" : "text-gray-500"
-                      }`}
+                      className={`text-xs mt-1 ${message.senderId === state.user?.id ? "text-blue-100" : "text-gray-500"
+                        }`}
                     >
                       {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                     </p>
