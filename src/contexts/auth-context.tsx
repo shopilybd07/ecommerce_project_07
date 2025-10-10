@@ -23,7 +23,17 @@ interface AuthContextType {
   state: AuthState
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
-  register: (name: string, email: string, password: string) => Promise<boolean>
+  register: (data: {
+    name: string
+    email: string
+    password: string
+    phone: string
+    username?: string
+    address: string
+    city: string
+    zipCode: string
+    country: string
+  }) => Promise<boolean>
   refreshOrders: () => Promise<void>
 }
 
@@ -42,7 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const user = await getAuthCookie()
         if (user) {
-          const orders = await getUserOrders(user.id)
+          // const orders = await getUserOrders(user.id)
+          const orders: Order[] = [] // Mock orders
           setState({
             user,
             orders,
@@ -83,9 +94,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (data: {
+    name: string
+    email: string
+    password: string
+    phone: string
+    username?: string
+    address: string
+    city: string
+    zipCode: string
+    country: string
+  }): Promise<boolean> => {
     try {
-      const user = await createUser(name, email)
+      const user = await createUser(data)
 
       if (user) {
         await setAuthCookie(user)

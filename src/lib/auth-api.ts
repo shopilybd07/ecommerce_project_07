@@ -55,6 +55,8 @@ export interface Role {
 export interface User {
   id: string
   name: string
+  username?: string
+  phone?: string
   email: string
   avatar?: string
   roles?: UserRole[]
@@ -76,37 +78,73 @@ export interface Order {
 }
 
 // Create or get user
-export async function createUser(name: string, email: string): Promise<User | null> {
+export async function createUser(data: {
+  name: string
+  email: string
+  password: string
+  phone: string
+  username?: string
+  address: string
+  city: string
+  zipCode: string
+  country: string
+}): Promise<User | null> {
   try {
-    // Check if user already exists
-    const existingUser = await prisma.$queryRaw<DbUser[]>`
-      SELECT id, name, email, avatar FROM users WHERE email = ${email}
-    `
+    await prisma.$queryRaw`BEGIN`
 
+    // Check if user already exists with the same email or phone number
+    const existingUser = await prisma.$queryRaw<
+      { id: string }[]
+    >`SELECT id FROM users WHERE email = ${data.email} OR phone = ${data.phone}`
     if (existingUser.length > 0) {
-      return {
-        id: existingUser[0].id,
-        name: existingUser[0].name,
-        email: existingUser[0].email,
-        avatar: existingUser[0].avatar || undefined,
-      }
+      console.error("A user with this email or phone number already exists.")
+      await prisma.$queryRaw`ROLLBACK`
+      return null
     }
 
-    // Create new user
-    const newUser = await prisma.$queryRaw<DbUser[]>`
-      INSERT INTO users (name, email)
-      VALUES (${name}, ${email})
-      RETURNING id, name, email, avatar
+    // In a real application, you should hash the password before storing it.
+    // For now, we're storing it in plaintext for simplicity.
+    const newUser = await prisma.$queryRaw<
+      {
+        id: string
+        name: string
+        username: string | null
+        phone: string
+        email: string
+        avatar: string | null
+      }[]
+    >`
+      INSERT INTO users (name, email, password, phone, username)
+      VALUES (${data.name}, ${data.email}, ${data.password}, ${data.phone}, ${data.username})
+      RETURNING id, name, username, phone, email, avatar
     `
+
+    if (newUser.length === 0) {
+      await prisma.$queryRaw`ROLLBACK`
+      return null
+    }
+
+    const userId = newUser[0].id
+
+    // Create a default billing address for the user
+    await prisma.$queryRaw`
+      INSERT INTO addresses ("customerId", type, address1, city, "zipCode", country)
+      VALUES (${userId}, 'BILLING', ${data.address}, ${data.city}, ${data.zipCode}, ${data.country})
+    `
+
+    await prisma.$queryRaw`COMMIT`
 
     return {
       id: newUser[0].id,
       name: newUser[0].name,
+      username: newUser[0].username || undefined,
+      phone: newUser[0].phone,
       email: newUser[0].email,
       avatar: newUser[0].avatar || undefined,
     }
   } catch (error) {
     console.error("Error creating user:", error)
+    await prisma.$queryRaw`ROLLBACK`
     return null
   }
 }

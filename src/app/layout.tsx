@@ -3,9 +3,12 @@ import type { Metadata } from "next"
 import "./globals.css";
 import { Poppins } from "next/font/google";
 import { AuthProvider } from "@/contexts/auth-context";
+import { ModalProvider } from "@/contexts/modal-context";
 import { StoreProvider } from "@/components/StoreProvider";
 import { CartProvider } from "@/contexts/cart-context";
 import { Header } from "@/components/header";
+import { AuthModal } from "@/components/auth/auth-modal";
+import MessengerButton from "@/components/chat/messenger-button";
 
 export const metadata: Metadata = {
   title: "Shopilybd",
@@ -29,8 +32,12 @@ export default function RootLayout({
         <StoreProvider>
           <AuthProvider>
             <CartProvider>
-              {/* <Header /> */}
-              {children}
+              <ModalProvider>
+                <Header />
+                {children}
+                <AuthModal />
+                <MessengerButton />
+              </ModalProvider>
             </CartProvider>
           </AuthProvider>
         </StoreProvider>
