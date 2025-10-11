@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingBag, User as UserIcon } from "lucide-react"
+import { ShoppingBag } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useModal } from "@/contexts/modal-context"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SearchBar } from "@/components/search-bar"
-import { CategoryNavigation } from "@/components/category-navigation"
+import { useCart } from "@/contexts/cart-context"
+import { Badge } from "./ui/badge"
 
 export function Header() {
   const {
@@ -23,19 +24,22 @@ export function Header() {
     logout,
   } = useAuth()
   const { openModal } = useModal()
+  const { state, dispatch } = useCart()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <ShoppingBag className="h-6 w-6" />
-          <span className="font-bold text-xl">ModernStore</span>
-        </Link>
-        <div className="hidden lg:block">
-          <CategoryNavigation />
+      <div className="container mx-auto flex h-20 items-center justify-between px-4">
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center space-x-2">
+            <span className="font-bold text-2xl">CITY PAARK</span>
+          </Link>
         </div>
-        <nav className="flex items-center space-x-6 text-sm font-medium">
-          <SearchBar className="w-[200px] lg:w-[300px] mr-4" />
+
+        <div className="flex-1 flex justify-center px-8">
+          <SearchBar className="w-full max-w-lg" />
+        </div>
+
+        <div className="flex items-center space-x-6 text-sm font-medium">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -61,9 +65,25 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button onClick={openModal}>Login</Button>
+            <Button variant="ghost" onClick={openModal}>
+              LOGIN / REGISTER
+            </Button>
           )}
-        </nav>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => dispatch({ type: "TOGGLE_CART" })}
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {state.itemCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">{state.itemCount}</Badge>
+              )}
+            </Button>
+            {/* <CartSyncIndicator /> */}
+          </div>
+        </div>
       </div>
     </header>
   )

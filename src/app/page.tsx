@@ -1,13 +1,12 @@
-import { ShoppingBag, Star, ArrowRight } from "lucide-react"
+import { ShoppingBag, ArrowRight } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button";
 import { HybridCartDrawer } from "@/components/hybrid-cart-drawer"
-import { PageHeader } from "@/components/page-header"
 import { ProductCard } from "@/components/product-card"
 import { getProducts } from "@/lib/product-api"
 import { HomeCarousel } from "@/components/home-carousel";
-
+import { TopCategories } from "@/components/top-categories";
 
 export default async function HomePage() {
   let products = [];
@@ -19,12 +18,8 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <PageHeader />
-
       <HomeCarousel />
-
-
-
+      <TopCategories />
       {/* Featured Products */}
       <section className="py-20">
         <div className="container mx-auto px-4">
