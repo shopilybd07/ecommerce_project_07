@@ -26,6 +26,17 @@ export async function getProducts(
   })
 }
 
+export async function getProductBySlug(slug: string) {
+  return prisma.product.findUnique({
+    where: { slug },
+    include: {
+      category: true,
+      subcategory: true,
+      images: true,
+    },
+  });
+}
+
 export async function getProductById(id: string) {
   return prisma.product.findUnique({
     where: { id },

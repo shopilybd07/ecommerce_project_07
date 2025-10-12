@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import Ably from "ably"
+import prisma from "@/lib/prisma"
 
 if (!process.env.ABLY_API_KEY) {
   throw new Error("ABLY_API_KEY environment variable is not set")
@@ -14,26 +15,37 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { userId, userRole } = body
 
-    if (!userId || !userRole) {
-      return NextResponse.json({ error: "userId and userRole are required" }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json({ error: "userId is required" }, { status: 400 })
     }
 
     // Define capabilities based on user role
     let capabilities: Record<string, string[]> = {}
 
-    if (["ADMIN", "MODERATOR", "SUPER_ADMIN"].includes(userRole)) {
+    if (userRole && ["ADMIN", "MODERATOR", "SUPER_ADMIN"].includes(userRole)) {
       // Admins can subscribe to admin messages and publish to any channel
       capabilities = {
         "admin:messages": ["subscribe", "publish"],
         "user:support": ["subscribe", "publish"],
         "conversation:*": ["subscribe", "publish"],
+        "chat:*": ["subscribe", "publish"],
       }
-    } else if (userRole === "CUSTOMER") {
+    } else if (userRole && userRole === "CUSTOMER") {
       // Customers can only subscribe to user support and their own conversations
       capabilities = {
         "user:support": ["subscribe"],
         "conversation:*": ["subscribe", "publish"],
       }
+    }
+
+    // For any user, if they have a chat room, give them access.
+    const chatRoom = await prisma.chatRoom.findUnique({
+      where: { userId: userId },
+      select: { id: true },
+    })
+
+    if (chatRoom) {
+      capabilities[`chat:${chatRoom.id}`] = ["subscribe", "publish"]
     }
 
     const tokenRequest = await ably.auth.createTokenRequest({

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import {
   Grid3X3,
   List,
@@ -10,8 +9,6 @@ import {
   SlidersHorizontal,
   X,
   Star,
-  ShoppingBag,
-  Heart,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -27,9 +24,8 @@ import { Slider } from "@/components/ui/slider"
 import { useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { useGetCategoriesQuery, useGetProductsQuery } from "@/store/api"
-import { CategoryNavigation } from "@/components/category-navigation"
-import { SearchBar } from "@/components/search-bar"
-import { useCart } from "@/contexts/cart-context"
+import { ProductCard } from "@/components/product-card"
+import { ProductCardSkeleton } from "@/components/product-card-skeleton"
 
 export default function ProductPage({
   categoryName: categoryNameProp,
@@ -44,7 +40,8 @@ export default function ProductPage({
   const categoryName = categoryNameProp
   const subcategoryName = subcategoryNameProp || subcategoryNameFromUrl
 
-  const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesQuery()
+  const { data: categoriesData } = useGetCategoriesQuery()
+  const categoriesForFilter = categoriesData?.data || []
 
   const { category, subcategory } = useMemo(() => {
     if (!categoriesData) return { category: null, subcategory: null }
@@ -69,6 +66,7 @@ export default function ProductPage({
     rating: 0,
     features: [] as string[],
     availability: [] as string[],
+    categories: [] as string[],
   })
 
   // Mock filter data
@@ -78,18 +76,27 @@ export default function ProductPage({
     availability: ["In Stock", "On Sale", "New Arrivals", "Free Shipping"],
   }
 
-  const { data: productsData, isLoading: isLoadingProducts, isError } = useGetProductsQuery()
+  const { data: productsData, isLoading: isLoadingProducts } = useGetProductsQuery({})
 
   const products = productsData?.products || []
+
+  const filteredProducts = useMemo(() => {
+    if (!products) return []
+    return products.filter((product: any) => {
+      const hasCategory =
+        filters.categories.length === 0 ||
+        filters.categories.includes(product.category.name)
+      return hasCategory
+    })
+  }, [products, filters])
 
   const activeFiltersCount =
     (filters.brands.length > 0 ? 1 : 0) +
     (filters.rating > 0 ? 1 : 0) +
     (filters.features.length > 0 ? 1 : 0) +
     (filters.availability.length > 0 ? 1 : 0) +
-    (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000 ? 1 : 0)
-
-  const { dispatch } = useCart()
+    (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000 ? 1 : 0) +
+    (filters.categories.length > 0 ? 1 : 0)
 
   const handleBrandChange = (brand: string, checked: boolean) => {
     setFilters((prev) => ({
@@ -114,6 +121,15 @@ export default function ProductPage({
     }))
   }
 
+  const handleCategoryChange = (category: string, checked: boolean) => {
+    setFilters((prev) => ({
+      ...prev,
+      categories: checked
+        ? [...prev.categories, category]
+        : prev.categories.filter((c) => c !== category),
+    }))
+  }
+
   const clearAllFilters = () => {
     setFilters({
       priceRange: [0, 1000],
@@ -121,6 +137,7 @@ export default function ProductPage({
       rating: 0,
       features: [],
       availability: [],
+      categories: [],
     })
   }
 
@@ -136,7 +153,9 @@ export default function ProductPage({
         case "feature":
           return { ...prev, features: prev.features.filter((f) => f !== value) }
         case "availability":
-          return { ...prev, availability: prev.availability.filter((a) => a !== value) }
+          return { ...prev, availability: prev.availability.filter((a) => a !== availability) }
+        case "category":
+          return { ...prev, categories: prev.categories.filter((c) => c !== value) }
         default:
           return prev
       }
@@ -147,22 +166,6 @@ export default function ProductPage({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <ShoppingBag className="h-6 w-6" />
-            <span className="font-bold text-xl">ModernStore</span>
-          </Link>
-          <div className="hidden lg:block">
-            <CategoryNavigation />
-          </div>
-          <div className="hidden md:flex items-center space-x-2">
-            <SearchBar className="w-[200px] lg:w-[300px]" />
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
@@ -236,8 +239,12 @@ export default function ProductPage({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setSortBy("featured")}>Featured</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("price-low")}>Price: Low to High</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("price-high")}>Price: High to Low</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("price-low")}>
+                  Price: Low to High
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("price-high")}>
+                  Price: High to Low
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setSortBy("rating")}>Highest Rated</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -285,13 +292,39 @@ export default function ProductPage({
                 </div>
 
                 <div className="space-y-6">
+                  {/* Categories */}
+                  <div>
+                    <h4 className="font-medium mb-3">Categories</h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {categoriesForFilter.map((category: any) => (
+                        <div key={category.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`category-${category.id}`}
+                            checked={filters.categories.includes(category.name)}
+                            onCheckedChange={(checked) =>
+                              handleCategoryChange(category.name, checked as boolean)
+                            }
+                          />
+                          <label
+                            htmlFor={`category-${category.id}`}
+                            className="text-sm cursor-pointer"
+                          >
+                            {category.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Price Range */}
                   <div>
                     <h4 className="font-medium mb-3">Price Range</h4>
                     <div className="px-2">
                       <Slider
                         value={filters.priceRange}
-                        onValueChange={(value) => setFilters((prev) => ({ ...prev, priceRange: value }))}
+                        onValueChange={(value) =>
+                          setFilters((prev) => ({ ...prev, priceRange: value }))
+                        }
                         max={1000}
                         min={0}
                         step={10}
@@ -363,7 +396,9 @@ export default function ProductPage({
                           <Checkbox
                             id={`feature-${feature}`}
                             checked={filters.features.includes(feature)}
-                            onCheckedChange={(checked) => handleFeatureChange(feature, checked as boolean)}
+                            onCheckedChange={(checked) =>
+                              handleFeatureChange(feature, checked as boolean)
+                            }
                           />
                           <label htmlFor={`feature-${feature}`} className="text-sm cursor-pointer">
                             {feature}
@@ -382,9 +417,14 @@ export default function ProductPage({
                           <Checkbox
                             id={`availability-${availability}`}
                             checked={filters.availability.includes(availability)}
-                            onCheckedChange={(checked) => handleAvailabilityChange(availability, checked as boolean)}
+                            onCheckedChange={(checked) =>
+                              handleAvailabilityChange(availability, checked as boolean)
+                            }
                           />
-                          <label htmlFor={`availability-${availability}`} className="text-sm cursor-pointer">
+                          <label
+                            htmlFor={`availability-${availability}`}
+                            className="text-sm cursor-pointer"
+                          >
                             {availability}
                           </label>
                         </div>
@@ -407,7 +447,10 @@ export default function ProductPage({
                   {(filters.priceRange[0] > 0 || filters.priceRange[1] < 1000) && (
                     <Badge variant="secondary" className="gap-1">
                       ${filters.priceRange[0]} - ${filters.priceRange[1]}
-                      <button onClick={() => removeFilter("price")} className="hover:bg-gray-300 rounded-full p-0.5">
+                      <button
+                        onClick={() => removeFilter("price")}
+                        className="hover:bg-gray-300 rounded-full p-0.5"
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
@@ -416,11 +459,26 @@ export default function ProductPage({
                   {filters.rating > 0 && (
                     <Badge variant="secondary" className="gap-1">
                       {filters.rating}+ stars
-                      <button onClick={() => removeFilter("rating")} className="hover:bg-gray-300 rounded-full p-0.5">
+                      <button
+                        onClick={() => removeFilter("rating")}
+                        className="hover:bg-gray-300 rounded-full p-0.5"
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
                   )}
+
+                  {filters.categories.map((category) => (
+                    <Badge key={category} variant="secondary" className="gap-1">
+                      {category}
+                      <button
+                        onClick={() => removeFilter("category", category)}
+                        className="hover:bg-gray-300 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
 
                   {filters.brands.map((brand) => (
                     <Badge key={brand} variant="secondary" className="gap-1">
@@ -467,159 +525,21 @@ export default function ProductPage({
 
             {/* Products Grid */}
             <div className={viewMode === "grid" ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-              {products.map((product: any) => (
-                <Link
-                  key={product.id}
-                  href={`/products/${product.category.name.toLowerCase()}/${product.subcategory.name.toLowerCase()}/${product.id
-                    }`}
-                >
-                  <Card className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300">
-                    <CardContent className="p-0">
-                      {viewMode === "grid" ? (
-                        <>
-                          <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-50 relative">
-                            <Image
-                              src={product.images[0]?.url || "/placeholder.svg"}
-                              alt={product.name}
-                              width={300}
-                              height={300}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute top-3 right-3 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Heart className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                dispatch({
-                                  type: "ADD_ITEM",
-                                  payload: {
-                                    id: product.id,
-                                    name: product.name,
-                                    price: product.price,
-                                    image: product.images[0]?.url,
-                                    category: product.category.name,
-                                  },
-                                })
-                              }}
-                              className="absolute bottom-3 left-3 right-3 bg-purple-600 hover:bg-purple-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              Add to Cart
-                            </Button>
-                            {product.isNew && <Badge className="absolute top-3 left-3 bg-green-600">New</Badge>}
-                            {product.isSale && <Badge className="absolute top-3 left-3 bg-red-600">Sale</Badge>}
-                          </div>
-                          <div className="p-4">
-                            <div className="flex items-center gap-1 mb-2">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-3 w-3 ${i < Math.floor(product.rating)
-                                      ? "fill-yellow-400 text-yellow-400"
-                                      : "text-gray-300"
-                                    }`}
-                                />
-                              ))}
-                              <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
-                            </div>
-                            <h3 className="font-semibold mb-2 group-hover:text-purple-600 transition-colors line-clamp-2">
-                              {product.name}
-                            </h3>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-lg">${product.price}</span>
-                              {product.originalPrice && (
-                                <span className="text-sm text-gray-500 line-through">
-                                  ${product.originalPrice}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex gap-4 p-4">
-                          <div className="w-24 h-24 overflow-hidden rounded-lg bg-gray-50 relative flex-shrink-0">
-                            <Image
-                              src={product.images[0]?.url || "/placeholder.svg"}
-                              alt={product.name}
-                              width={96}
-                              height={96}
-                              className="w-full h-full object-cover"
-                            />
-                            {product.isNew && (
-                              <Badge className="absolute top-1 left-1 bg-green-600 text-xs">New</Badge>
-                            )}
-                            {product.isSale && (
-                              <Badge className="absolute top-1 left-1 bg-red-600 text-xs">Sale</Badge>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-1 mb-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-3 w-3 ${i < Math.floor(product.rating)
-                                      ? "fill-yellow-400 text-yellow-400"
-                                      : "text-gray-300"
-                                    }`}
-                                />
-                              ))}
-                              <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
-                            </div>
-                            <h3 className="font-semibold mb-1 group-hover:text-purple-600 transition-colors">
-                              {product.name}
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {product.category.name} • {product.subcategory.name}
-                            </p>
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-bold text-lg">${product.price}</span>
-                              {product.originalPrice && (
-                                <span className="text-sm text-gray-500 line-through">
-                                  ${product.originalPrice}
-                                </span>
-                              )}
-                            </div>
-                            <Button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                dispatch({
-                                  type: "ADD_ITEM",
-                                  payload: {
-                                    id: product.id,
-                                    name: product.name,
-                                    price: product.price,
-                                    image: product.images[0]?.url,
-                                    category: product.category.name,
-                                  },
-                                })
-                              }}
-                              size="sm"
-                              className="bg-purple-600 hover:bg-purple-700"
-                            >
-                              Add to Cart
-                            </Button>
-                          </div>
-                          <Button variant="ghost" size="icon" className="self-start">
-                            <Heart className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+              {isLoadingProducts
+                ? Array.from({ length: 9 }).map((_, i) => <ProductCardSkeleton key={i} />)
+                : filteredProducts.map((product: any) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
             </div>
 
             {/* Load More */}
-            <div className="text-center mt-12">
-              <Button variant="outline" size="lg">
-                Load More Products
-              </Button>
-            </div>
+            {products.length > 16 && (
+              <div className="text-center mt-12">
+                <Button variant="outline" size="lg">
+                  Load More Products
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

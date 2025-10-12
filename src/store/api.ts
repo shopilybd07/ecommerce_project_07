@@ -26,6 +26,15 @@ export const api = createApi({
                 throw new Error(response.message || "Failed to fetch product"); // ❌ throw error if not success
             },
         }),
+        getProductBySlug: builder.query<Product, string>({
+            query: (slug) => `products/slug/${slug}`,
+            transformResponse: (response: ApiResponse<Product>) => {
+                if (response.success) {
+                    return response.data;
+                }
+                throw new Error(response.message || "Failed to fetch product");
+            },
+        }),
         searchProducts: builder.query({
             query: ({ query, filters, pagination }) => ({
                 url: 'products/search',
@@ -56,6 +65,7 @@ export const api = createApi({
 export const {
     useGetProductsQuery,
     useGetProductByIdQuery,
+    useGetProductBySlugQuery,
     useSearchProductsQuery,
     useGetCategoriesQuery,
     useGetCategoryByIdQuery,

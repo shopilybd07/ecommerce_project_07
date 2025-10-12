@@ -9,11 +9,11 @@ export default function SupportPage() {
   const { state } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (!state.isLoading && !state.user) {
-      router.push("/login")
-    }
-  }, [state.isLoading, state.user, router])
+  // useEffect(() => {
+  //   if (!state.isLoading && !state.user) {
+  //     router.push("/login")
+  //   }
+  // }, [state.isLoading, state.user, router])
 
   if (state.isLoading) {
     return (
@@ -23,9 +23,9 @@ export default function SupportPage() {
     )
   }
 
-  if (!state.user) {
-    return null
-  }
+  // if (!state.user) {
+  //   return null
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50">

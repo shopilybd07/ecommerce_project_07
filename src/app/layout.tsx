@@ -3,9 +3,12 @@ import type { Metadata } from "next"
 import "./globals.css";
 import { Poppins } from "next/font/google";
 import { AuthProvider } from "@/contexts/auth-context";
+import { ModalProvider } from "@/contexts/modal-context";
 import { StoreProvider } from "@/components/StoreProvider";
 import { CartProvider } from "@/contexts/cart-context";
 import { Header } from "@/components/header";
+import { AuthModal } from "@/components/auth/auth-modal";
+import MessengerButton from "@/components/chat/messenger-button";
 
 export const metadata: Metadata = {
   title: "Shopilybd",
@@ -27,12 +30,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={poppins.className}>
         <StoreProvider>
-          <AuthProvider>
-            <CartProvider>
-              {/* <Header /> */}
-              {children}
-            </CartProvider>
-          </AuthProvider>
+          <ModalProvider>
+            <AuthProvider>
+              <CartProvider>
+                <Header />
+                {children}
+                <AuthModal />
+                <MessengerButton />
+              </CartProvider>
+            </AuthProvider>
+          </ModalProvider>
         </StoreProvider>
       </body>
     </html>

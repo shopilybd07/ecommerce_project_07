@@ -24,14 +24,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart } from "@/contexts/cart-context"
 import { SearchBar } from "@/components/search-bar"
 import { CategoryNavigation } from "@/components/category-navigation"
-import { useGetProductByIdQuery } from "@/store/api"
+import { useGetProductBySlugQuery } from "@/store/api"
 
-const ProductDetails = ({ productId }: { productId: string }) => {
+const ProductDetails = ({ productSlug }: { productSlug: string }) => {
     const { dispatch } = useCart();
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
 
-    const { data: product, isLoading } = useGetProductByIdQuery(productId);
+    const { data: product, isLoading } = useGetProductBySlugQuery(productSlug);
 
     // const categoryName = params.category.charAt(0).toUpperCase() + params.category.slice(1);
 
@@ -60,7 +60,7 @@ const ProductDetails = ({ productId }: { productId: string }) => {
                 <div className="container mx-auto flex h-16 items-center justify-between px-4">
                     <Link href="/" className="flex items-center space-x-2">
                         <ShoppingBag className="h-6 w-6" />
-                        <span className="font-bold text-xl">ModernStore</span>
+                        <span className="font-bold text-xl">Shopily</span>
                     </Link>
                     <div className="hidden lg:block">
                         <CategoryNavigation />
