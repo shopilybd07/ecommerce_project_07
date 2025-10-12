@@ -60,7 +60,7 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                 <div className="container mx-auto flex h-16 items-center justify-between px-4">
                     <Link href="/" className="flex items-center space-x-2">
                         <ShoppingBag className="h-6 w-6" />
-                        <span className="font-bold text-xl">ModernStore</span>
+                        <span className="font-bold text-xl">Shopily</span>
                     </Link>
                     <div className="hidden lg:block">
                         <CategoryNavigation />

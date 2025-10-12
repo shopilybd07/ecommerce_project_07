@@ -9,7 +9,6 @@ import { CartProvider } from "@/contexts/cart-context";
 import { Header } from "@/components/header";
 import { AuthModal } from "@/components/auth/auth-modal";
 import MessengerButton from "@/components/chat/messenger-button";
-import { CategoryNavigation } from "@/components/category-navigation";
 
 export const metadata: Metadata = {
   title: "Shopilybd",
@@ -35,7 +34,6 @@ export default function RootLayout({
             <AuthProvider>
               <CartProvider>
                 <Header />
-                <CategoryNavigation />
                 {children}
                 <AuthModal />
                 <MessengerButton />

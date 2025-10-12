@@ -150,7 +150,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
         </div>
 
         {!isLogin && (
-          <>
+          <div className="grid grid-cols-2">
             <div>
               <Label htmlFor="address">
                 Address <span className="text-red-500">*</span>
@@ -182,7 +182,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
               </Label>
               <Input id="country" type="text" value={formData.country} onChange={handleChange} required className="mt-1" />
             </div>
-          </>
+          </div>
         )}
 
         {error && <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">{error}</div>}

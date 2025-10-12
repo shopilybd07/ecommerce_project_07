@@ -10,8 +10,8 @@ interface CategoryNavigationProps {
 }
 
 export function CategoryNavigation({ className }: CategoryNavigationProps) {
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
-  const { data: categoriesData, isLoading, isError } = useGetCategoriesQuery()
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const { data: categoriesData, isLoading, isError } = useGetCategoriesQuery();
   const categories = categoriesData?.data || []
 
   const { data: subcategoriesData } = useGetSubcategoriesQuery(undefined)

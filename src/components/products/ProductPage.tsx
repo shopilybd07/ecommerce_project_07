@@ -9,7 +9,6 @@ import {
   SlidersHorizontal,
   X,
   Star,
-  ShoppingBag,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,8 +24,6 @@ import { Slider } from "@/components/ui/slider"
 import { useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { useGetCategoriesQuery, useGetProductsQuery } from "@/store/api"
-import { CategoryNavigation } from "@/components/category-navigation"
-import { SearchBar } from "@/components/search-bar"
 import { ProductCard } from "@/components/product-card"
 import { ProductCardSkeleton } from "@/components/product-card-skeleton"
 
@@ -44,6 +41,7 @@ export default function ProductPage({
   const subcategoryName = subcategoryNameProp || subcategoryNameFromUrl
 
   const { data: categoriesData } = useGetCategoriesQuery()
+  const categoriesForFilter = categoriesData?.data || []
 
   const { category, subcategory } = useMemo(() => {
     if (!categoriesData) return { category: null, subcategory: null }
@@ -68,6 +66,7 @@ export default function ProductPage({
     rating: 0,
     features: [] as string[],
     availability: [] as string[],
+    categories: [] as string[],
   })
 
   // Mock filter data
@@ -81,12 +80,23 @@ export default function ProductPage({
 
   const products = productsData?.products || []
 
+  const filteredProducts = useMemo(() => {
+    if (!products) return []
+    return products.filter((product: any) => {
+      const hasCategory =
+        filters.categories.length === 0 ||
+        filters.categories.includes(product.category.name)
+      return hasCategory
+    })
+  }, [products, filters])
+
   const activeFiltersCount =
     (filters.brands.length > 0 ? 1 : 0) +
     (filters.rating > 0 ? 1 : 0) +
     (filters.features.length > 0 ? 1 : 0) +
     (filters.availability.length > 0 ? 1 : 0) +
-    (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000 ? 1 : 0)
+    (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000 ? 1 : 0) +
+    (filters.categories.length > 0 ? 1 : 0)
 
   const handleBrandChange = (brand: string, checked: boolean) => {
     setFilters((prev) => ({
@@ -111,6 +121,15 @@ export default function ProductPage({
     }))
   }
 
+  const handleCategoryChange = (category: string, checked: boolean) => {
+    setFilters((prev) => ({
+      ...prev,
+      categories: checked
+        ? [...prev.categories, category]
+        : prev.categories.filter((c) => c !== category),
+    }))
+  }
+
   const clearAllFilters = () => {
     setFilters({
       priceRange: [0, 1000],
@@ -118,6 +137,7 @@ export default function ProductPage({
       rating: 0,
       features: [],
       availability: [],
+      categories: [],
     })
   }
 
@@ -134,6 +154,8 @@ export default function ProductPage({
           return { ...prev, features: prev.features.filter((f) => f !== value) }
         case "availability":
           return { ...prev, availability: prev.availability.filter((a) => a !== availability) }
+        case "category":
+          return { ...prev, categories: prev.categories.filter((c) => c !== value) }
         default:
           return prev
       }
@@ -270,6 +292,30 @@ export default function ProductPage({
                 </div>
 
                 <div className="space-y-6">
+                  {/* Categories */}
+                  <div>
+                    <h4 className="font-medium mb-3">Categories</h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {categoriesForFilter.map((category: any) => (
+                        <div key={category.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`category-${category.id}`}
+                            checked={filters.categories.includes(category.name)}
+                            onCheckedChange={(checked) =>
+                              handleCategoryChange(category.name, checked as boolean)
+                            }
+                          />
+                          <label
+                            htmlFor={`category-${category.id}`}
+                            className="text-sm cursor-pointer"
+                          >
+                            {category.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Price Range */}
                   <div>
                     <h4 className="font-medium mb-3">Price Range</h4>
@@ -422,6 +468,18 @@ export default function ProductPage({
                     </Badge>
                   )}
 
+                  {filters.categories.map((category) => (
+                    <Badge key={category} variant="secondary" className="gap-1">
+                      {category}
+                      <button
+                        onClick={() => removeFilter("category", category)}
+                        className="hover:bg-gray-300 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+
                   {filters.brands.map((brand) => (
                     <Badge key={brand} variant="secondary" className="gap-1">
                       {brand}
@@ -469,7 +527,7 @@ export default function ProductPage({
             <div className={viewMode === "grid" ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
               {isLoadingProducts
                 ? Array.from({ length: 9 }).map((_, i) => <ProductCardSkeleton key={i} />)
-                : products.map((product: any) => (
+                : filteredProducts.map((product: any) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
             </div>

@@ -19,7 +19,7 @@ export function AuthModal() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={closeModal}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-xl max-h-[80%] overflow-y-scroll">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl">Welcome</DialogTitle>
           <DialogDescription className="text-center">
