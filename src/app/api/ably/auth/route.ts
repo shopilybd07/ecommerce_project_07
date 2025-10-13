@@ -1,13 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 import Ably from "ably"
-import prisma from "@/lib/prisma"
+import prisma from "@/lib/prisma";
+import { ABLY_API_KEY } from "@/constants";
 
-if (!process.env.ABLY_API_KEY) {
+if (ABLY_API_KEY) {
   throw new Error("ABLY_API_KEY environment variable is not set")
 }
 
 const ably = new Ably.Rest({
-  key: process.env.ABLY_API_KEY,
+  key: ABLY_API_KEY,
 })
 
 export async function POST(request: NextRequest) {

@@ -1,11 +1,12 @@
-import Ably from "ably"
+import { ABLY_API_KEY } from "@/constants"
+import Ably from "ably";
 
-if (!process.env.NEXT_PUBLIC_ABLY_API_KEY) {
+if (!ABLY_API_KEY) {
   throw new Error("ABLY_API_KEY environment variable is not set")
 }
 
 export const ablyRest = new Ably.Rest({
-  key: process.env.NEXT_PUBLIC_ABLY_API_KEY,
+  key: ABLY_API_KEY,
 })
 
 export const CHANNELS = {
