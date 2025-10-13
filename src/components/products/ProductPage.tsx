@@ -71,8 +71,6 @@ export default function ProductPage({
 
   // Mock filter data
   const filterOptions = {
-    brands: ["Apple", "Samsung", "Sony", "Bose", "JBL", "Anker"],
-    features: ["Wireless", "Noise Cancelling", "Water Resistant", "Fast Charging", "Bluetooth 5.0"],
     availability: ["In Stock", "On Sale", "New Arrivals", "Free Shipping"],
   }
 
@@ -368,46 +366,6 @@ export default function ProductPage({
                     </div>
                   </div>
 
-                  {/* Brands */}
-                  <div>
-                    <h4 className="font-medium mb-3">Brands</h4>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {filterOptions.brands.map((brand) => (
-                        <div key={brand} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`brand-${brand}`}
-                            checked={filters.brands.includes(brand)}
-                            onCheckedChange={(checked) => handleBrandChange(brand, checked as boolean)}
-                          />
-                          <label htmlFor={`brand-${brand}`} className="text-sm cursor-pointer">
-                            {brand}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Features */}
-                  <div>
-                    <h4 className="font-medium mb-3">Features</h4>
-                    <div className="space-y-2">
-                      {filterOptions.features.map((feature) => (
-                        <div key={feature} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`feature-${feature}`}
-                            checked={filters.features.includes(feature)}
-                            onCheckedChange={(checked) =>
-                              handleFeatureChange(feature, checked as boolean)
-                            }
-                          />
-                          <label htmlFor={`feature-${feature}`} className="text-sm cursor-pointer">
-                            {feature}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Availability */}
                   <div>
                     <h4 className="font-medium mb-3">Availability</h4>
@@ -480,7 +438,7 @@ export default function ProductPage({
                     </Badge>
                   ))}
 
-                  {filters.brands.map((brand) => (
+                  {/* {filters.brands.map((brand) => (
                     <Badge key={brand} variant="secondary" className="gap-1">
                       {brand}
                       <button
@@ -490,9 +448,9 @@ export default function ProductPage({
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
-                  ))}
+                  ))} */}
 
-                  {filters.features.map((feature) => (
+                  {/* {filters.features.map((feature) => (
                     <Badge key={feature} variant="secondary" className="gap-1">
                       {feature}
                       <button
@@ -502,7 +460,7 @@ export default function ProductPage({
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
-                  ))}
+                  ))} */}
 
                   {filters.availability.map((availability) => (
                     <Badge key={availability} variant="secondary" className="gap-1">
@@ -528,7 +486,15 @@ export default function ProductPage({
               {isLoadingProducts
                 ? Array.from({ length: 9 }).map((_, i) => <ProductCardSkeleton key={i} />)
                 : filteredProducts.map((product: any) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={{
+                      ...product,
+                      image: product.images?.[0]?.url || "",
+                      category: product.category.name,
+                      subcategory: product.subcategory.name,
+                    }}
+                  />
                 ))}
             </div>
 

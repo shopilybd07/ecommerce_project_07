@@ -24,7 +24,6 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     address: "",
     city: "",
     zipCode: "",
-    country: "",
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -150,7 +149,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
         </div>
 
         {!isLogin && (
-          <div className="grid grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="address">
                 Address <span className="text-red-500">*</span>
@@ -175,12 +174,6 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                 Zip Code <span className="text-red-500">*</span>
               </Label>
               <Input id="zipCode" type="text" value={formData.zipCode} onChange={handleChange} required className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="country">
-                Country <span className="text-red-500">*</span>
-              </Label>
-              <Input id="country" type="text" value={formData.country} onChange={handleChange} required className="mt-1" />
             </div>
           </div>
         )}

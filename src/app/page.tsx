@@ -31,7 +31,15 @@ export default async function HomePage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={{
+                  ...product,
+                  image: product.images?.[0]?.url || "",
+                  category: product.category.name,
+                  subcategory: product.subcategory.name,
+                }}
+              />
             ))}
           </div>
           <div className="text-center mt-12">

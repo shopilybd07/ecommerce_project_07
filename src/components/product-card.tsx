@@ -11,26 +11,22 @@ export interface ProductForCard {
   name: string
   slug: string
   price: number
-  images: { url: string }[]
-  category: { name: string }
-  subcategory: { name: string }
+  image: string
+  category: string
+  subcategory: string
 }
 
 export function ProductCard({ product }: { product: ProductForCard }) {
-  const { dispatch } = useCart()
+  const { addToCart } = useCart()
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
-    dispatch({
-      type: "ADD_ITEM",
-      payload: {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images?.[0]?.url || "",
-        category: product.category.name,
-        quantity: 1,
-      },
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image || "",
+      category: product.category,
     })
   }
 

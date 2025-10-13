@@ -29,6 +29,7 @@ type CartAction =
   | { type: "TOGGLE_CART" }
   | { type: "OPEN_CART" }
   | { type: "CLOSE_CART" }
+  | { type: "SET_CART"; payload: CartState }
 
 const CartContext = createContext<{
   state: CartState
@@ -38,6 +39,12 @@ const CartContext = createContext<{
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
+    case "SET_CART": {
+      return {
+        ...state,
+        ...action.payload,
+      }
+    }
     case "ADD_ITEM": {
       const existingItem = state.items.find((item) => item.id === action.payload.id)
 
@@ -158,11 +165,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedCart = localStorage.getItem("cart")
     if (savedCart) {
-      const cartData = JSON.parse(savedCart)
-      cartData.items.forEach((item: CartItem) => {
-        for (let i = 0; i < item.quantity; i++) {
-          dispatch({ type: "ADD_ITEM", payload: { ...item, quantity: 1 } })
-        }
+      const { items } = JSON.parse(savedCart)
+      const total = items.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0)
+      const itemCount = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0)
+      dispatch({
+        type: "SET_CART",
+        payload: {
+          items,
+          total,
+          itemCount,
+          isOpen: false,
+        },
       })
     }
   }, [])

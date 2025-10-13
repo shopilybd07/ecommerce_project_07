@@ -30,9 +30,11 @@ interface BillingAddress {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { user } = useAuth()
-  const { state, dispatch } = useCart();
-  const items = state.items;
+  const {
+    state: { user },
+  } = useAuth()
+  const { state, dispatch } = useCart()
+  const items = state.items
   const { toast } = useToast()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -66,14 +68,14 @@ export default function CheckoutPage() {
   const total = subtotal + tax + shipping
 
   const handleSubmitOrder = async () => {
-    // if (!user) {
-    //   toast({
-    //     title: "Authentication Required",
-    //     description: "Please log in to place an order.",
-    //     variant: "destructive",
-    //   })
-    //   return
-    // }
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to place an order.",
+        variant: "destructive",
+      })
+      return
+    }
 
     if (items.length === 0) {
       toast({
@@ -88,7 +90,7 @@ export default function CheckoutPage() {
 
     try {
       const orderData = {
-        userId: "regerhg",
+        userId: user.id,
         items: items.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -135,19 +137,19 @@ export default function CheckoutPage() {
     }
   }
 
-  // if (!user) {
-  //   return (
-  //     <div className="container mx-auto px-4 py-8">
-  //       <Card>
-  //         <CardContent className="p-8 text-center">
-  //           <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-  //           <p className="text-gray-600 mb-6">Please log in to continue with checkout.</p>
-  //           <Button onClick={() => router.push("/login")}>Go to Login</Button>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   )
-  // }
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">Please log in to continue with checkout.</p>
+            <Button onClick={() => router.push("/login")}>Go to Login</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (items.length === 0) {
     return (
