@@ -288,7 +288,7 @@ model Address {
   address2   String?
   city       String
   zipCode    String
-  state      String?
+  district   String?
   country    String
   shippingForOrders Order[] @relation("ShippingAddress")
   billingForOrders  Order[] @relation("BillingAddress")

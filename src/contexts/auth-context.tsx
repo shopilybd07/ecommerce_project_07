@@ -33,6 +33,7 @@ interface AuthContextType {
     city: string
     zipCode: string
     country: string
+    district: string
   }) => Promise<boolean>
   refreshOrders: () => Promise<void>
 }
