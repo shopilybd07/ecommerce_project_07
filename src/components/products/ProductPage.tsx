@@ -528,7 +528,15 @@ export default function ProductPage({
               {isLoadingProducts
                 ? Array.from({ length: 9 }).map((_, i) => <ProductCardSkeleton key={i} />)
                 : filteredProducts.map((product: any) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={{
+                      ...product,
+                      image: product.images?.[0]?.url || "",
+                      category: product.category.name,
+                      subcategory: product.subcategory.name,
+                    }}
+                  />
                 ))}
             </div>
 
