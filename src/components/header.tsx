@@ -67,8 +67,8 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name[0]}</AvatarFallback>
+                      <AvatarImage src={user.avatar} alt={user.firstName} />
+                      <AvatarFallback>{user.firstName?.slice(0, 1)}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>

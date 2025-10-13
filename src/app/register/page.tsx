@@ -3,10 +3,10 @@
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ShoppingBag } from "lucide-react"
-import { LoginForm } from "@/components/auth/login-form"
+import { RegisterForm } from "@/components/auth/register-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter()
 
   const handleSuccess = () => {
@@ -25,13 +25,13 @@ export default function LoginPage() {
 
         <Card className="shadow-xl border-0">
           <CardHeader>
-            <CardTitle className="text-center">Sign In</CardTitle>
+            <CardTitle className="text-center">Create Account</CardTitle>
           </CardHeader>
           <CardContent>
-            <LoginForm onSuccess={handleSuccess} />
+            <RegisterForm onSuccess={handleSuccess} />
             <div className="text-center mt-4">
-              <Link href="/register" className="text-sm text-purple-600 hover:text-purple-700">
-                Don't have an account? Sign up
+              <Link href="/login" className="text-sm text-purple-600 hover:text-purple-700">
+                Already have an account? Sign in
               </Link>
             </div>
           </CardContent>

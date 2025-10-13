@@ -14,15 +14,20 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum UserRole {
+  CUSTOMER 
+  ADMIN
+}
+
 model User {
   id                   String    @id @default(cuid())
-  name                 String
   username             String?   @unique
   phone                String    @unique
   email                String    @unique
   password             String
   firstName            String?
   lastName             String?
+  role                 UserRole
   isEmailVerified      Boolean   @default(false)
   emailVerifyToken     String?
   resetPasswordToken   String?
@@ -33,7 +38,6 @@ model User {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  roles     UserRole[]
   Account   Account[]
   Session   Session[]
   cart      Cart?
@@ -44,26 +48,6 @@ model User {
   chatParticipants     ChatParticipant[]
 
   @@map("users")
-}
-
-model Role {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  users     UserRole[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
-
-model UserRole {
-  id        String   @id @default(cuid())
-  userId    String
-  roleId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, roleId])
 }
 
 model Account {
@@ -155,6 +139,7 @@ model Product {
   price         Float
   costPrice     Float?
   status        ProductStatus @default(ACTIVE)
+  videoUrl      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -288,8 +273,8 @@ model Address {
   address2   String?
   city       String
   zipCode    String
-  state      String?
-  country    String
+  district      String?
+  country    String?
   shippingForOrders Order[] @relation("ShippingAddress")
   billingForOrders  Order[] @relation("BillingAddress")
 

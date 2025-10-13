@@ -356,7 +356,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
                                     </div>
 
                                     {/* Brands */}
-                                    <div>
+                                    {/* <div>
                                         <h4 className="font-medium mb-3">Brands</h4>
                                         <div className="space-y-2 max-h-40 overflow-y-auto">
                                             {filterOptions.brands.map((brand) => (
@@ -372,10 +372,10 @@ export default function CategoryPage({ params }: { params: { category: string } 
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                     {/* Features */}
-                                    <div>
+                                    {/* <div>
                                         <h4 className="font-medium mb-3">Features</h4>
                                         <div className="space-y-2">
                                             {filterOptions.features.map((feature) => (
@@ -391,7 +391,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                     {/* Availability */}
                                     <div>
