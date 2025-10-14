@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import ReactImageZoom from "react-image-zoom"
 import {
     Star,
     Heart,
@@ -14,6 +15,7 @@ import {
     RotateCcw,
     ChevronLeft,
     ChevronRight,
+    Video,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -22,11 +24,13 @@ import { useCart } from "@/contexts/cart-context"
 import { SearchBar } from "@/components/search-bar"
 import { CategoryNavigation } from "@/components/category-navigation"
 import { useGetProductBySlugQuery } from "@/store/api"
+import { RelatedProducts } from "./RelatedProducts"
 
 const ProductDetails = ({ productSlug }: { productSlug: string }) => {
     const { dispatch } = useCart();
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
     const { data: product, isLoading } = useGetProductBySlugQuery(productSlug);
 
@@ -75,12 +79,11 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                     {/* Image Gallery */}
                     <div className="space-y-4">
                         <div className="aspect-square overflow-hidden rounded-2xl bg-gray-50 relative">
-                            <Image
-                                src={product.images[selectedImage].url || "/placeholder.svg"}
-                                alt={product.name}
+                            <ReactImageZoom
                                 width={600}
                                 height={600}
-                                className="w-full h-full object-cover"
+                                zoomWidth={500}
+                                img={product.images[selectedImage].url || "/placeholder.svg"}
                             />
                             <Button variant="ghost" size="icon" className="absolute top-4 right-4 bg-white/80 hover:bg-white">
                                 <Heart className="h-5 w-5" />
@@ -106,7 +109,7 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                 </Button>
                             )}
                         </div>
-                        <div className="grid grid-cols-4 gap-3">
+                        <div className="grid grid-cols-5 gap-3">
                             {product.images.map((image, index) => (
                                 <button
                                     key={index}
@@ -123,6 +126,14 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                     />
                                 </button>
                             ))}
+                            {product.videoUrl && (
+                                <button
+                                    onClick={() => setIsVideoModalOpen(true)}
+                                    className="aspect-square overflow-hidden rounded-lg border-2 transition-colors border-gray-200 hover:border-gray-300 flex items-center justify-center"
+                                >
+                                    <Video className="h-8 w-8 text-gray-400" />
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -199,54 +210,77 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                 </div>
 
                 {/* Related Products */}
-                <div>
-                    <h2 className="text-2xl font-bold mb-8">Related Products</h2>
-                    {/* <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {relatedProducts.map((relatedProduct) => (
-                            <Link key={relatedProduct.id} href={`/products/${params.category}/${relatedProduct.id}`}>
-                                <Card className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300">
-                                    <CardContent className="p-0">
-                                        <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-50">
-                                            <Image
-                                                src={relatedProduct.image || "/placeholder.svg"}
-                                                alt={relatedProduct.name}
-                                                width={300}
-                                                height={300}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                            />
-                                        </div>
-                                        <div className="p-4">
-                                            <div className="flex items-center gap-1 mb-2">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star
-                                                        key={i}
-                                                        className={`h-3 w-3 ${i < Math.floor(relatedProduct.rating)
-                                                            ? "fill-yellow-400 text-yellow-400"
-                                                            : "text-gray-300"
-                                                            }`}
-                                                    />
-                                                ))}
-                                                <span className="text-xs text-gray-500 ml-1">({relatedProduct.reviews})</span>
-                                            </div>
-                                            <h3 className="font-semibold mb-2 group-hover:text-purple-600 transition-colors line-clamp-2">
-                                                {relatedProduct.name}
-                                            </h3>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-lg">${relatedProduct.price}</span>
-                                                {relatedProduct.originalPrice && (
-                                                    <span className="text-sm text-gray-500 line-through">${relatedProduct.originalPrice}</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))}
-                    </div> */}
+                {product.category && product.subcategory && (
+                    <RelatedProducts
+                        categoryId={product.category.id}
+                        subcategoryId={product.subcategory.id}
+                        currentProductId={product.id}
+                    />
+                )}
+            </div>
+            <VideoModal
+                isOpen={isVideoModalOpen}
+                onClose={() => setIsVideoModalOpen(false)}
+                videoUrl={product.videoUrl || ""}
+            />
+        </div>
+    )
+};
+
+function getYoutubeEmbedUrl(url: string) {
+    let embedUrl = "";
+    try {
+        const urlObj = new URL(url);
+        const videoId = urlObj.searchParams.get("v");
+        if (videoId) {
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        } else if (urlObj.hostname === "youtu.be") {
+            embedUrl = `https://www.youtube.com/embed${urlObj.pathname}`;
+        }
+    } catch (error) {
+        console.error("Invalid YouTube URL:", error);
+    }
+    return embedUrl;
+}
+
+const VideoModal = ({ isOpen, onClose, videoUrl }: { isOpen: boolean, onClose: () => void, videoUrl: string }) => {
+    if (!isOpen) return null;
+
+    const embedUrl = getYoutubeEmbedUrl(videoUrl);
+
+    if (!embedUrl) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
+                <div className="bg-white p-8 rounded-lg" onClick={(e) => e.stopPropagation()}>
+                    <p>Invalid YouTube URL</p>
+                    <Button onClick={onClose}>Close</Button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
+            <div className="relative w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+                <button
+                    onClick={onClose}
+                    className="absolute -top-10 right-0 text-white text-3xl"
+                >
+                    &times;
+                </button>
+                <div className="aspect-video">
+                    <iframe
+                        width="100%"
+                        height="100%"
+                        src={embedUrl}
+                        title="YouTube video player"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
                 </div>
             </div>
         </div>
-    )
+    );
 };
 
 export default ProductDetails;

@@ -9,6 +9,12 @@ export type Product = {
         url: string
     }[]
     category: {
+        id: string
         name: string
     }
+    subcategory: {
+        id: string
+        name: string
+    }
+    videoUrl?: string
 }
