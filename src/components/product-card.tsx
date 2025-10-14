@@ -17,7 +17,10 @@ export interface ProductForCard {
 }
 
 export function ProductCard({ product }: { product: ProductForCard }) {
-  const { addToCart } = useCart()
+  const { addToCart } = useCart();
+
+  console.log(product);
+
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -33,7 +36,7 @@ export function ProductCard({ product }: { product: ProductForCard }) {
   return (
     <Card className="group cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 border">
       <Link
-        href={`/products/${product.category.name.toLowerCase()}/${product.subcategory.name.toLowerCase()}/${product.slug}`}
+        href={`/products/${product.category.toLowerCase()}/${product.subcategory.toLowerCase()}/${product.slug}`}
         passHref
       >
         <CardContent className="p-4 text-center">

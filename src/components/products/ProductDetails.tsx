@@ -17,10 +17,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import parse from "html-react-parser"
 import { useCart } from "@/contexts/cart-context"
 import { SearchBar } from "@/components/search-bar"
 import { CategoryNavigation } from "@/components/category-navigation"
@@ -55,24 +52,6 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Header */}
-            <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-                <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                    <Link href="/" className="flex items-center space-x-2">
-                        <ShoppingBag className="h-6 w-6" />
-                        <span className="font-bold text-xl">Shopily</span>
-                    </Link>
-                    <div className="hidden lg:block">
-                        <CategoryNavigation />
-                    </div>
-                    <Suspense fallback={<div>Loading...</div>}>
-                        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                            <SearchBar className="w-[200px] lg:w-[300px] mr-4" />
-                        </nav>
-                    </Suspense>
-                </div>
-            </header>
-
             <div className="container mx-auto px-4 py-8">
                 {/* Breadcrumb */}
                 <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
@@ -172,7 +151,7 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                     <Badge className="bg-red-100 text-red-800">Save ${product.originalPrice - product.price}</Badge>
                                 )} */}
                             </div>
-                            <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                            <div className="text-gray-600 leading-relaxed">{parse(product.description)}</div>
                         </div>
 
                         {/* Features */}
@@ -209,148 +188,14 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                             </div>
                             <div className="flex gap-4">
                                 <Button size="lg" className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={handleAddToCart}>
-                                    Add to Cart - ${(product.price * quantity).toFixed(2)}
+                                    Add to Cart - ৳ {(product.price * quantity).toFixed(2)}
                                 </Button>
                                 <Button variant="outline" size="lg">
                                     Buy Now
                                 </Button>
                             </div>
                         </div>
-
-                        {/* Shipping Info */}
-                        <div className="space-y-3 pt-6 border-t">
-                            <div className="flex items-center gap-3 text-sm">
-                                <Truck className="h-4 w-4 text-green-600" />
-                                <span>Free shipping on orders over $100</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-sm">
-                                <Shield className="h-4 w-4 text-blue-600" />
-                                <span>2-year warranty included</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-sm">
-                                <RotateCcw className="h-4 w-4 text-purple-600" />
-                                <span>30-day return policy</span>
-                            </div>
-                        </div>
                     </div>
-                </div>
-
-                {/* Product Details Tabs */}
-                <div className="mb-16">
-                    <Tabs defaultValue="description" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="description">Description</TabsTrigger>
-                            <TabsTrigger value="specifications">Specifications</TabsTrigger>
-                            {/* <TabsTrigger value="reviews">Reviews ({product.reviews})</TabsTrigger> */}
-                        </TabsList>
-                        <TabsContent value="description" className="mt-6">
-                            <div className="prose max-w-none">
-                                <p className="text-gray-600 leading-relaxed">
-                                    {product.description}
-                                </p>
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="specifications" className="mt-6">
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div>
-                                    <h4 className="font-semibold mb-3">Technical Specifications</h4>
-                                    <dl className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Driver Size</dt>
-                                            <dd>40mm</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Frequency Response</dt>
-                                            <dd>20Hz - 20kHz</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Impedance</dt>
-                                            <dd>32 Ohm</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Bluetooth Version</dt>
-                                            <dd>5.0</dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold mb-3">Physical Specifications</h4>
-                                    <dl className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Weight</dt>
-                                            <dd>250g</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Dimensions</dt>
-                                            <dd>190 x 160 x 80mm</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Battery Life</dt>
-                                            <dd>30 hours</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Charging Time</dt>
-                                            <dd>2 hours</dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="reviews" className="mt-6">
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-6">
-                                    {/* <div className="text-center">
-                                        <div className="text-4xl font-bold">{product.rating}</div>
-                                        <div className="flex items-center gap-1 mt-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    className={`h-4 w-4 ${i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                                        }`}
-                                                />
-                                            ))}
-                                        </div>
-                                        <div className="text-sm text-gray-600 mt-1">{product.reviews} reviews</div>
-                                    </div> */}
-                                    <div className="flex-1">
-                                        {[5, 4, 3, 2, 1].map((stars) => (
-                                            <div key={stars} className="flex items-center gap-2 text-sm">
-                                                <span>{stars}</span>
-                                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                                    <div
-                                                        className="bg-yellow-400 h-2 rounded-full"
-                                                        style={{ width: `${Math.random() * 80 + 10}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-gray-600">{Math.floor(Math.random() * 50 + 10)}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <Separator />
-                                <div className="space-y-4">
-                                    {[1, 2, 3].map((review) => (
-                                        <div key={review} className="border-b pb-4 last:border-b-0">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="flex items-center gap-1">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                    ))}
-                                                </div>
-                                                <span className="font-medium text-sm">John D.</span>
-                                                <span className="text-xs text-gray-500">2 days ago</span>
-                                            </div>
-                                            <p className="text-sm text-gray-600">
-                                                Amazing sound quality and comfort. The noise cancellation works perfectly and the battery life
-                                                is exactly as advertised. Highly recommended!
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </TabsContent>
-                    </Tabs>
                 </div>
 
                 {/* Related Products */}
