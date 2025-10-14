@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { ABLY_API_KEY } from "@/constants"
 import Ably from "ably";
 
