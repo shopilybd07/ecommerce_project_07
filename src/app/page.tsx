@@ -16,8 +16,6 @@ export default async function HomePage() {
     console.error("Failed to fetch products, using empty array.", error);
   }
 
-  console.log("ABLY_API_KEY:", process.env.ABLY_API_KEY);
-
   return (
     <div className="min-h-screen bg-white">
       <HomeCarousel />

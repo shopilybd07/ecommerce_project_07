@@ -8,6 +8,7 @@ import { SearchBar } from "@/components/search-bar"
 import { CategoryNavigation } from "@/components/category-navigation"
 import { MobileCategoryMenu } from "@/components/mobile-category-menu";
 import { useCart } from "@/contexts/cart-context"
+import { Suspense } from "react"
 
 export function PageHeader() {
   const { state, dispatch } = useCart()
@@ -25,9 +26,11 @@ export function PageHeader() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center space-x-2">
-            <SearchBar className="w-[200px] lg:w-[300px]" />
-          </div>
+          <Suspense fallback={<div>Loading...</div>}>
+            <div className="hidden md:flex items-center space-x-2">
+              <SearchBar className="w-[200px] lg:w-[300px]" />
+            </div>
+          </Suspense>
           <Button variant="ghost" size="icon">
             <Heart className="h-5 w-5" />
           </Button>

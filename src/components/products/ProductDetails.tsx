@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -65,9 +65,11 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                     <div className="hidden lg:block">
                         <CategoryNavigation />
                     </div>
-                    <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                        <SearchBar className="w-[200px] lg:w-[300px] mr-4" />
-                    </nav>
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+                            <SearchBar className="w-[200px] lg:w-[300px] mr-4" />
+                        </nav>
+                    </Suspense>
                 </div>
             </header>
 

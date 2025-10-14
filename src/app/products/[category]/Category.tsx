@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronDown, Grid3X3, List, Star, Heart, ShoppingBag } from "lucide-react"
@@ -192,9 +192,11 @@ export default function CategoryPage({ params }: { params: { category: string } 
                     <div className="hidden lg:block">
                         <CategoryNavigation />
                     </div>
-                    <div className="hidden md:flex items-center space-x-2">
-                        <SearchBar className="w-[200px] lg:w-[300px]" />
-                    </div>
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <div className="hidden md:flex items-center space-x-2">
+                            <SearchBar className="w-[200px] lg:w-[300px]" />
+                        </div>
+                    </Suspense>
                 </div>
             </header>
 
