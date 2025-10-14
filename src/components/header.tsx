@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SearchBar } from "@/components/search-bar"
 import { useCart } from "@/contexts/cart-context"
 import { Badge } from "./ui/badge"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { CategoryNavigation } from "./category-navigation"
 
 export function Header() {
@@ -56,10 +56,11 @@ export function Header() {
               <span className="font-bold text-2xl">CITY PAARK</span>
             </Link>
           </div>
-
-          <div className="flex-1 flex justify-center px-8">
-            {isSticky ? null : <SearchBar className="w-full max-w-lg" />}
-          </div>
+          <Suspense fallback={<div>Loading...</div>}>
+            <div className="flex-1 flex justify-center px-8">
+              {isSticky ? null : <SearchBar className="w-full max-w-lg" />}
+            </div>
+          </Suspense>
 
           <div className="flex items-center space-x-6 text-sm font-medium">
             {user ? (
