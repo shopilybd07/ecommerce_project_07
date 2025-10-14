@@ -1,18 +1,20 @@
+export const runtime = "nodejs";
+
 import { type NextRequest, NextResponse } from "next/server"
 import Ably from "ably"
 import prisma from "@/lib/prisma";
 import { ABLY_API_KEY } from "@/constants";
 
-if (ABLY_API_KEY) {
-  throw new Error("ABLY_API_KEY environment variable is not set")
-}
-
-const ably = new Ably.Rest({
-  key: ABLY_API_KEY,
-})
-
 export async function POST(request: NextRequest) {
   try {
+    if (!ABLY_API_KEY) {
+      throw new Error("ABLY_API_KEY environment variable is not set")
+    }
+
+    const ably = new Ably.Rest({
+      key: ABLY_API_KEY,
+    })
+
     const body = await request.json()
     const { userId, userRole } = body
 
