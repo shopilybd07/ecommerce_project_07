@@ -11,7 +11,7 @@ import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
+  email: z.email({ message: "Invalid email address" }),
   password: z.string().min(1, { message: "Password is required" }),
 })
 

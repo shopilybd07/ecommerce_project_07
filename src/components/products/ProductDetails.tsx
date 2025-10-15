@@ -3,7 +3,8 @@
 import { Suspense, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import ReactImageZoom from "react-image-zoom"
+import InnerImageZoom from "react-inner-image-zoom"
+import 'react-inner-image-zoom/lib/styles.min.css'
 import {
     Star,
     Heart,
@@ -79,11 +80,10 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                     {/* Image Gallery */}
                     <div className="space-y-4">
                         <div className="aspect-square overflow-hidden rounded-2xl bg-gray-50 relative">
-                            <ReactImageZoom
-                                width={600}
-                                height={600}
-                                zoomWidth={500}
-                                img={product.images[selectedImage].url || "/placeholder.svg"}
+                            <InnerImageZoom
+                                src={product.images[selectedImage].url || "/placeholder.svg"}
+                                zoomSrc={product.images[selectedImage].url || "/placeholder.svg"}
+                                fullscreenOnMobile={true}
                             />
                             <Button variant="ghost" size="icon" className="absolute top-4 right-4 bg-white/80 hover:bg-white">
                                 <Heart className="h-5 w-5" />
@@ -201,9 +201,7 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                 <Button size="lg" className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={handleAddToCart}>
                                     Add to Cart - ৳ {(product.price * quantity).toFixed(2)}
                                 </Button>
-                                <Button variant="outline" size="lg">
-                                    Buy Now
-                                </Button>
+                                <Link href="/checkout" className="flex-1 bg-gray-200 hover:bg-gray-300">Buy Now</Link>
                             </div>
                         </div>
                     </div>

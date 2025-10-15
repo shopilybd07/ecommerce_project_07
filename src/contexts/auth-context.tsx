@@ -11,6 +11,7 @@ import {
   clearAuthCookie,
   type User,
   type Order,
+  loginUser,
 } from "@/lib/auth-api"
 
 interface AuthState {
@@ -75,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       // In a real app, you would validate password here
-      const user = await getUserByEmail(email)
+      const user = await loginUser({ email, password })
 
       if (user) {
         const orders = await getUserOrders(user.id)
