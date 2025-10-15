@@ -64,6 +64,7 @@ export interface CreateOrderData {
   accountNumber?: string
   promotionCode?: string
   notes?: string
+  sessionId?: string
 }
 
 export interface Order {
@@ -259,6 +260,7 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
           shippingAddressId: shippingAddress.id,
           billingAddressId: billingAddress?.id,
           promotionId,
+          checkoutSessionId: data.sessionId,
         },
       })
 

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import InnerImageZoom from "react-inner-image-zoom"
 import 'react-inner-image-zoom/lib/styles.min.css'
@@ -22,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import parse from "html-react-parser"
 import { useCart } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
 import { SearchBar } from "@/components/search-bar"
 import { CategoryNavigation } from "@/components/category-navigation"
 import { useGetProductBySlugQuery } from "@/store/api"
@@ -29,9 +31,13 @@ import { RelatedProducts } from "./RelatedProducts"
 
 const ProductDetails = ({ productSlug }: { productSlug: string }) => {
     const { dispatch } = useCart();
+    const {
+        state: { user },
+    } = useAuth()
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+    const router = useRouter();
 
     const { data: product, isLoading } = useGetProductBySlugQuery(productSlug);
 
@@ -49,6 +55,35 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                     category: product.category.name,
                 },
             })
+        }
+    };
+
+    const handleBuyNow = async () => {
+        if (product && user) {
+            try {
+                const response = await fetch("/api/checkout/sessions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        productId: product.id,
+                        quantity: quantity,
+                        userId: user.id,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    router.push(`/checkout?sessionId=${result.data.sessionId}`);
+                } else {
+                    // Handle error
+                    console.error("Failed to create checkout session:", result.error);
+                }
+            } catch (error) {
+                console.error("Error creating checkout session:", error);
+            }
         }
     };
 
@@ -201,7 +236,9 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                 <Button size="lg" className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={handleAddToCart}>
                                     Add to Cart - ৳ {(product.price * quantity).toFixed(2)}
                                 </Button>
-                                <Link href="/checkout" className="flex-1 bg-gray-200 hover:bg-gray-300">Buy Now</Link>
+                                <Button size="lg" className="flex-1 bg-gray-200 hover:bg-gray-300 text-black" onClick={handleBuyNow}>
+                                    Buy Now
+                                </Button>
                             </div>
                         </div>
                     </div>

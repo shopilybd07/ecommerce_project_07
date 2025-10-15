@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { Suspense, useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,8 @@ interface ShippingAddress {
   address2: string
   city: string
   zipCode: string
+  district: string
+  country: string
 }
 
 interface BillingAddress {
@@ -26,16 +28,60 @@ interface BillingAddress {
   address2: string
   city: string
   zipCode: string
+  district: string
+  country: string
 }
 
 export default function CheckoutPage() {
-  const router = useRouter()
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Checkout />
+    </Suspense>
+  )
+}
+
+function Checkout() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     state: { user },
   } = useAuth()
-  const { state, dispatch } = useCart()
-  const items = state.items
+  const { state: cartState, dispatch } = useCart()
   const { toast } = useToast()
+
+  const [items, setItems] = useState(cartState.items);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sessionId = searchParams.get('sessionId');
+    if (sessionId) {
+      setSessionId(sessionId);
+      const fetchSessionData = async () => {
+        try {
+          const response = await fetch(`/api/checkout/sessions/${sessionId}`);
+          const result = await response.json();
+
+          if (result.success) {
+            const { product, quantity, price } = result.data;
+            setItems([{
+              id: product.id,
+              name: product.name,
+              price: price,
+              image: product.images[0]?.url || "", // Use optional chaining and a fallback
+              quantity: quantity,
+              category: product.category?.name || "",
+            }]);
+          } else {
+            // Handle error
+            console.error("Failed to fetch checkout session:", result.error);
+          }
+        } catch (error) {
+          console.error("Error fetching checkout session:", error);
+        }
+      };
+      fetchSessionData();
+    }
+  }, [searchParams]);
 
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(1)
@@ -46,6 +92,8 @@ export default function CheckoutPage() {
     address2: "",
     city: "",
     zipCode: "",
+    district: "",
+    country: "",
   })
 
   const [billingAddress, setBillingAddress] = useState<BillingAddress>({
@@ -53,6 +101,8 @@ export default function CheckoutPage() {
     address2: "",
     city: "",
     zipCode: "",
+    district: "",
+    country: "",
   })
 
   const [paymentMethod, setPaymentMethod] = useState<string>("")
@@ -116,7 +166,9 @@ export default function CheckoutPage() {
       const result = await response.json()
 
       if (result.success) {
-        dispatch({ type: "CLEAR_CART" })
+        if (!sessionId) {
+          dispatch({ type: "CLEAR_CART" })
+        }
         toast({
           title: "Order Placed Successfully!",
           description: `Your order ${result.data.orderNumber} has been placed.`,
@@ -215,6 +267,24 @@ export default function CheckoutPage() {
                         required
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="shipping-district">District</Label>
+                      <Input
+                        id="shipping-district"
+                        value={shippingAddress.district}
+                        onChange={(e) => setShippingAddress((prev) => ({ ...prev, district: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="shipping-country">Country</Label>
+                      <Input
+                        id="shipping-country"
+                        value={shippingAddress.country}
+                        onChange={(e) => setShippingAddress((prev) => ({ ...prev, country: e.target.value }))}
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -269,6 +339,24 @@ export default function CheckoutPage() {
                             onChange={(e) => setBillingAddress((prev) => ({ ...prev, zipCode: e.target.value }))}
                             required
                           />
+                    </div>
+                    <div>
+                      <Label htmlFor="billing-district">District</Label>
+                      <Input
+                        id="billing-district"
+                        value={billingAddress.district}
+                        onChange={(e) => setBillingAddress((prev) => ({ ...prev, district: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="billing-country">Country</Label>
+                      <Input
+                        id="billing-country"
+                        value={billingAddress.country}
+                        onChange={(e) => setBillingAddress((prev) => ({ ...prev, country: e.target.value }))}
+                        required
+                      />
                         </div>
                       </div>
                     </>
