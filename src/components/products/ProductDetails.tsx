@@ -2,7 +2,10 @@
 
 import { Suspense, useState } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
+import InnerImageZoom from "react-inner-image-zoom"
+import 'react-inner-image-zoom/lib/styles.min.css'
 import {
     Star,
     Heart,
@@ -14,22 +17,27 @@ import {
     RotateCcw,
     ChevronLeft,
     ChevronRight,
+    Video,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import parse from "html-react-parser"
 import { useCart } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
 import { SearchBar } from "@/components/search-bar"
 import { CategoryNavigation } from "@/components/category-navigation"
 import { useGetProductBySlugQuery } from "@/store/api"
+import { RelatedProducts } from "./RelatedProducts"
 
 const ProductDetails = ({ productSlug }: { productSlug: string }) => {
     const { dispatch } = useCart();
+    const {
+        state: { user },
+    } = useAuth()
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+    const router = useRouter();
 
     const { data: product, isLoading } = useGetProductBySlugQuery(productSlug);
 
@@ -50,29 +58,40 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
         }
     };
 
+    const handleBuyNow = async () => {
+        if (product && user) {
+            try {
+                const response = await fetch("/api/checkout/sessions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        productId: product.id,
+                        quantity: quantity,
+                        userId: user.id,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    router.push(`/checkout?sessionId=${result.data.sessionId}`);
+                } else {
+                    // Handle error
+                    console.error("Failed to create checkout session:", result.error);
+                }
+            } catch (error) {
+                console.error("Error creating checkout session:", error);
+            }
+        }
+    };
+
     if (isLoading) return <p className="">Loading...</p>;
     if (!product) return <p className="">Product not found</p>;
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Header */}
-            <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-                <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                    <Link href="/" className="flex items-center space-x-2">
-                        <ShoppingBag className="h-6 w-6" />
-                        <span className="font-bold text-xl">Shopily</span>
-                    </Link>
-                    <div className="hidden lg:block">
-                        <CategoryNavigation />
-                    </div>
-                    <Suspense fallback={<div>Loading...</div>}>
-                        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                            <SearchBar className="w-[200px] lg:w-[300px] mr-4" />
-                        </nav>
-                    </Suspense>
-                </div>
-            </header>
-
             <div className="container mx-auto px-4 py-8">
                 {/* Breadcrumb */}
                 <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
@@ -96,12 +115,10 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                     {/* Image Gallery */}
                     <div className="space-y-4">
                         <div className="aspect-square overflow-hidden rounded-2xl bg-gray-50 relative">
-                            <Image
+                            <InnerImageZoom
                                 src={product.images[selectedImage].url || "/placeholder.svg"}
-                                alt={product.name}
-                                width={600}
-                                height={600}
-                                className="w-full h-full object-cover"
+                                zoomSrc={product.images[selectedImage].url || "/placeholder.svg"}
+                                fullscreenOnMobile={true}
                             />
                             <Button variant="ghost" size="icon" className="absolute top-4 right-4 bg-white/80 hover:bg-white">
                                 <Heart className="h-5 w-5" />
@@ -127,7 +144,7 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                 </Button>
                             )}
                         </div>
-                        <div className="grid grid-cols-4 gap-3">
+                        <div className="grid grid-cols-5 gap-3">
                             {product.images.map((image, index) => (
                                 <button
                                     key={index}
@@ -144,6 +161,14 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                     />
                                 </button>
                             ))}
+                            {product.videoUrl && (
+                                <button
+                                    onClick={() => setIsVideoModalOpen(true)}
+                                    className="aspect-square overflow-hidden rounded-lg border-2 transition-colors border-gray-200 hover:border-gray-300 flex items-center justify-center"
+                                >
+                                    <Video className="h-8 w-8 text-gray-400" />
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -172,7 +197,7 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                     <Badge className="bg-red-100 text-red-800">Save ${product.originalPrice - product.price}</Badge>
                                 )} */}
                             </div>
-                            <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                            <div className="text-gray-600 leading-relaxed">{parse(product.description)}</div>
                         </div>
 
                         {/* Features */}
@@ -209,199 +234,88 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                             </div>
                             <div className="flex gap-4">
                                 <Button size="lg" className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={handleAddToCart}>
-                                    Add to Cart - ${(product.price * quantity).toFixed(2)}
+                                    Add to Cart - ৳ {(product.price * quantity).toFixed(2)}
                                 </Button>
-                                <Button variant="outline" size="lg">
+                                <Button size="lg" className="flex-1 bg-gray-200 hover:bg-gray-300 text-black" onClick={handleBuyNow}>
                                     Buy Now
                                 </Button>
-                            </div>
-                        </div>
-
-                        {/* Shipping Info */}
-                        <div className="space-y-3 pt-6 border-t">
-                            <div className="flex items-center gap-3 text-sm">
-                                <Truck className="h-4 w-4 text-green-600" />
-                                <span>Free shipping on orders over $100</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-sm">
-                                <Shield className="h-4 w-4 text-blue-600" />
-                                <span>2-year warranty included</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-sm">
-                                <RotateCcw className="h-4 w-4 text-purple-600" />
-                                <span>30-day return policy</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Product Details Tabs */}
-                <div className="mb-16">
-                    <Tabs defaultValue="description" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="description">Description</TabsTrigger>
-                            <TabsTrigger value="specifications">Specifications</TabsTrigger>
-                            {/* <TabsTrigger value="reviews">Reviews ({product.reviews})</TabsTrigger> */}
-                        </TabsList>
-                        <TabsContent value="description" className="mt-6">
-                            <div className="prose max-w-none">
-                                <p className="text-gray-600 leading-relaxed">
-                                    {product.description}
-                                </p>
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="specifications" className="mt-6">
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div>
-                                    <h4 className="font-semibold mb-3">Technical Specifications</h4>
-                                    <dl className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Driver Size</dt>
-                                            <dd>40mm</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Frequency Response</dt>
-                                            <dd>20Hz - 20kHz</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Impedance</dt>
-                                            <dd>32 Ohm</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Bluetooth Version</dt>
-                                            <dd>5.0</dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold mb-3">Physical Specifications</h4>
-                                    <dl className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Weight</dt>
-                                            <dd>250g</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Dimensions</dt>
-                                            <dd>190 x 160 x 80mm</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Battery Life</dt>
-                                            <dd>30 hours</dd>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <dt className="text-gray-600">Charging Time</dt>
-                                            <dd>2 hours</dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="reviews" className="mt-6">
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-6">
-                                    {/* <div className="text-center">
-                                        <div className="text-4xl font-bold">{product.rating}</div>
-                                        <div className="flex items-center gap-1 mt-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    className={`h-4 w-4 ${i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                                        }`}
-                                                />
-                                            ))}
-                                        </div>
-                                        <div className="text-sm text-gray-600 mt-1">{product.reviews} reviews</div>
-                                    </div> */}
-                                    <div className="flex-1">
-                                        {[5, 4, 3, 2, 1].map((stars) => (
-                                            <div key={stars} className="flex items-center gap-2 text-sm">
-                                                <span>{stars}</span>
-                                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                                    <div
-                                                        className="bg-yellow-400 h-2 rounded-full"
-                                                        style={{ width: `${Math.random() * 80 + 10}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-gray-600">{Math.floor(Math.random() * 50 + 10)}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <Separator />
-                                <div className="space-y-4">
-                                    {[1, 2, 3].map((review) => (
-                                        <div key={review} className="border-b pb-4 last:border-b-0">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="flex items-center gap-1">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                    ))}
-                                                </div>
-                                                <span className="font-medium text-sm">John D.</span>
-                                                <span className="text-xs text-gray-500">2 days ago</span>
-                                            </div>
-                                            <p className="text-sm text-gray-600">
-                                                Amazing sound quality and comfort. The noise cancellation works perfectly and the battery life
-                                                is exactly as advertised. Highly recommended!
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </TabsContent>
-                    </Tabs>
-                </div>
-
                 {/* Related Products */}
-                <div>
-                    <h2 className="text-2xl font-bold mb-8">Related Products</h2>
-                    {/* <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {relatedProducts.map((relatedProduct) => (
-                            <Link key={relatedProduct.id} href={`/products/${params.category}/${relatedProduct.id}`}>
-                                <Card className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300">
-                                    <CardContent className="p-0">
-                                        <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-50">
-                                            <Image
-                                                src={relatedProduct.image || "/placeholder.svg"}
-                                                alt={relatedProduct.name}
-                                                width={300}
-                                                height={300}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                            />
-                                        </div>
-                                        <div className="p-4">
-                                            <div className="flex items-center gap-1 mb-2">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star
-                                                        key={i}
-                                                        className={`h-3 w-3 ${i < Math.floor(relatedProduct.rating)
-                                                            ? "fill-yellow-400 text-yellow-400"
-                                                            : "text-gray-300"
-                                                            }`}
-                                                    />
-                                                ))}
-                                                <span className="text-xs text-gray-500 ml-1">({relatedProduct.reviews})</span>
-                                            </div>
-                                            <h3 className="font-semibold mb-2 group-hover:text-purple-600 transition-colors line-clamp-2">
-                                                {relatedProduct.name}
-                                            </h3>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-lg">${relatedProduct.price}</span>
-                                                {relatedProduct.originalPrice && (
-                                                    <span className="text-sm text-gray-500 line-through">${relatedProduct.originalPrice}</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))}
-                    </div> */}
+                {product.category && product.subcategory && (
+                    <RelatedProducts
+                        categoryId={product.category.id}
+                        subcategoryId={product.subcategory.id}
+                        currentProductId={product.id}
+                    />
+                )}
+            </div>
+            <VideoModal
+                isOpen={isVideoModalOpen}
+                onClose={() => setIsVideoModalOpen(false)}
+                videoUrl={product.videoUrl || ""}
+            />
+        </div>
+    )
+};
+
+function getYoutubeEmbedUrl(url: string) {
+    let embedUrl = "";
+    try {
+        const urlObj = new URL(url);
+        const videoId = urlObj.searchParams.get("v");
+        if (videoId) {
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        } else if (urlObj.hostname === "youtu.be") {
+            embedUrl = `https://www.youtube.com/embed${urlObj.pathname}`;
+        }
+    } catch (error) {
+        console.error("Invalid YouTube URL:", error);
+    }
+    return embedUrl;
+}
+
+const VideoModal = ({ isOpen, onClose, videoUrl }: { isOpen: boolean, onClose: () => void, videoUrl: string }) => {
+    if (!isOpen) return null;
+
+    const embedUrl = getYoutubeEmbedUrl(videoUrl);
+
+    if (!embedUrl) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
+                <div className="bg-white p-8 rounded-lg" onClick={(e) => e.stopPropagation()}>
+                    <p>Invalid YouTube URL</p>
+                    <Button onClick={onClose}>Close</Button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
+            <div className="relative w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+                <button
+                    onClick={onClose}
+                    className="absolute -top-10 right-0 text-white text-3xl"
+                >
+                    &times;
+                </button>
+                <div className="aspect-video">
+                    <iframe
+                        width="100%"
+                        height="100%"
+                        src={embedUrl}
+                        title="YouTube video player"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
                 </div>
             </div>
         </div>
-    )
+    );
 };
 
 export default ProductDetails;

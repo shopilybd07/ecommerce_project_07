@@ -26,7 +26,10 @@ export async function POST(request: NextRequest) {
       accountNumber: body.accountNumber,
       promotionCode: body.promotionCode,
       notes: body.notes,
-    }
+    };
+
+    console.log(orderData);
+
 
     const order = await createOrder(orderData)
 

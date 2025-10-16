@@ -53,11 +53,17 @@ export const api = createApi({
         getSubcategoryById: builder.query<any, string>({
             query: (id) => `subcategories/${id}`,
         }),
-        getRelatedProducts: builder.query<any, { productId: string; subcategoryId: string }>({
-            query: ({ productId, subcategoryId }) => ({
-                url: `products/${productId}/related`,
-                params: { subcategoryId },
+        getRelatedProducts: builder.query<Product[], { categoryId: string; subcategoryId: string; currentProductId: string }>({
+            query: ({ categoryId, subcategoryId, currentProductId }) => ({
+                url: 'products/related',
+                params: { categoryId, subcategoryId, exclude: currentProductId },
             }),
+            transformResponse: (response: ApiResponse<Product[]>) => {
+                if (response.success) {
+                    return response.data;
+                }
+                throw new Error(response.message || "Failed to fetch related products");
+            },
         }),
     }),
 });

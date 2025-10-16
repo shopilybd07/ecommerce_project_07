@@ -62,9 +62,7 @@ export default function ProductPage({
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({
     priceRange: [0, 1000],
-    brands: [] as string[],
     rating: 0,
-    features: [] as string[],
     availability: [] as string[],
     categories: [] as string[],
   })
@@ -89,7 +87,6 @@ export default function ProductPage({
   }, [products, filters])
 
   const activeFiltersCount =
-    (filters.brands.length > 0 ? 1 : 0) +
     (filters.rating > 0 ? 1 : 0) +
     (filters.features.length > 0 ? 1 : 0) +
     (filters.availability.length > 0 ? 1 : 0) +

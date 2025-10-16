@@ -4,7 +4,6 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-
 datasource db {
   provider = "postgresql" // or mysql/sqlite
   url      = env("DATABASE_URL")
@@ -15,7 +14,7 @@ generator client {
 }
 
 enum UserRole {
-  CUSTOMER 
+  CUSTOMER
   ADMIN
 }
 
@@ -38,14 +37,15 @@ model User {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  Account   Account[]
-  Session   Session[]
-  cart      Cart?
-  orders    Order[]
-  addresses Address[]
-  chatRoom  ChatRoom?
-  chatMessages         ChatMessage[]
-  chatParticipants     ChatParticipant[]
+  Account          Account[]
+  Session          Session[]
+  cart             Cart?
+  orders           Order[]
+  addresses        Address[]
+  chatRoom         ChatRoom?
+  chatMessages     ChatMessage[]
+  chatParticipants ChatParticipant[]
+  CheckoutSession  CheckoutSession[]
 
   @@map("users")
 }
@@ -102,12 +102,12 @@ enum ProductStatus {
 }
 
 model Category {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
   description String?
   status      CategoryStatus @default(ACTIVE)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   subcategories Subcategory[]
   products      Product[]
@@ -116,14 +116,14 @@ model Category {
 }
 
 model Subcategory {
-  id          String   @id @default(cuid())
+  id          String            @id @default(cuid())
   name        String
   description String?
   status      SubcategoryStatus @default(ACTIVE)
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  category    Category          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   products Product[]
 
@@ -131,20 +131,20 @@ model Subcategory {
 }
 
 model Product {
-  id            String   @id @default(cuid())
-  name          String
-  slug          String   @unique
-  sku           String   @unique
-  description   String?
-  price         Float
-  costPrice     Float?
-  status        ProductStatus @default(ACTIVE)
-  videoUrl      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  sku         String        @unique
+  description String?
+  price       Float
+  costPrice   Float?
+  status      ProductStatus @default(ACTIVE)
+  videoUrl    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   categoryId    String
-  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category      Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   subcategoryId String?
   subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id])
 
@@ -154,6 +154,7 @@ model Product {
   cartItems       CartItem[]
   videos          Video[]
   stockAlerts     StockAlert[]
+  CheckoutSession CheckoutSession[]
 
   @@map("products")
 }
@@ -221,10 +222,10 @@ model CartItem {
 }
 
 model Order {
-  id                String      @id @default(cuid())
-  orderNumber       String      @unique
+  id                String            @id @default(cuid())
+  orderNumber       String            @unique
   customerId        String
-  customer          User        @relation(fields: [customerId], references: [id])
+  customer          User              @relation(fields: [customerId], references: [id])
   status            OrderStatus
   paymentStatus     PaymentStatus
   fulfillmentStatus FulfillmentStatus
@@ -237,15 +238,17 @@ model Order {
   discount          Float
   total             Float
   notes             String?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
   shippingAddressId String?
-  shippingAddress   Address?    @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingAddress   Address?          @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
   billingAddressId  String?
-  billingAddress    Address?    @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  billingAddress    Address?          @relation("BillingAddress", fields: [billingAddressId], references: [id])
   promotionId       String?
-  promotion         Promotion?  @relation(fields: [promotionId], references: [id])
+  promotion         Promotion?        @relation(fields: [promotionId], references: [id])
   orderItems        OrderItem[]
+  checkoutSessionId String?           @unique
+  checkoutSession   CheckoutSession?  @relation(fields: [checkoutSessionId], references: [id])
 
   @@map("orders")
 }
@@ -265,53 +268,53 @@ model OrderItem {
 }
 
 model Address {
-  id        String   @id @default(cuid())
-  customerId String
-  customer   User        @relation(fields: [customerId], references: [id])
-  type       AddressType
-  address1   String
-  address2   String?
-  city       String
-  zipCode    String
-  district      String?
-  country    String?
-  shippingForOrders Order[] @relation("ShippingAddress")
-  billingForOrders  Order[] @relation("BillingAddress")
+  id                String      @id @default(cuid())
+  customerId        String
+  customer          User        @relation(fields: [customerId], references: [id])
+  type              AddressType
+  address1          String
+  address2          String?
+  city              String
+  zipCode           String
+  district          String?
+  country           String?
+  shippingForOrders Order[]     @relation("ShippingAddress")
+  billingForOrders  Order[]     @relation("BillingAddress")
 
   @@map("addresses")
 }
 
 model Promotion {
-  id                  String    @id @default(cuid())
-  code                String    @unique
-  name                String
-  description         String?
-  discountType        String
-  discountValue       Float
-  minOrderAmount      Float     @default(0)
-  maxDiscountAmount   Float?
-  startsAt            DateTime?
-  expiresAt           DateTime?
-  usageLimit          Int?
-  usedCount           Int       @default(0)
-  isActive            Boolean   @default(true)
-  orders              Order[]
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  code              String    @unique
+  name              String
+  description       String?
+  discountType      String
+  discountValue     Float
+  minOrderAmount    Float     @default(0)
+  maxDiscountAmount Float?
+  startsAt          DateTime?
+  expiresAt         DateTime?
+  usageLimit        Int?
+  usedCount         Int       @default(0)
+  isActive          Boolean   @default(true)
+  orders            Order[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@map("promotions")
 }
 
 model InventoryMovement {
-    id          String   @id @default(cuid())
-    productId   String
-    type        String // IN, OUT
-    quantity    Int
-    reason      String
-    referenceId String?
-    createdAt   DateTime @default(now())
+  id          String   @id @default(cuid())
+  productId   String
+  type        String // IN, OUT
+  quantity    Int
+  reason      String
+  referenceId String?
+  createdAt   DateTime @default(now())
 
-    @@map("inventory_movements")
+  @@map("inventory_movements")
 }
 
 model StockAlert {
@@ -428,15 +431,15 @@ model ChatRoom {
 }
 
 model ChatMessage {
-  id         String   @id @default(cuid())
-  roomId     String
-  room       ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  senderId   String
-  sender     User     @relation(fields: [senderId], references: [id])
-  message    String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  isRead     Boolean  @default(false)
+  id        String   @id @default(cuid())
+  roomId    String
+  room      ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isRead    Boolean  @default(false)
 
   @@map("chat_messages")
 }
@@ -451,4 +454,20 @@ model ChatParticipant {
 
   @@unique([roomId, userId])
   @@map("chat_participants")
+}
+
+model CheckoutSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order?
+
+  @@map("checkout_sessions")
 }

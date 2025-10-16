@@ -8,6 +8,7 @@ import { StoreProvider } from "@/components/StoreProvider";
 import { CartProvider } from "@/contexts/cart-context";
 import { Header } from "@/components/header";
 import { AuthModal } from "@/components/auth/auth-modal";
+import { CartDrawer } from "@/components/cart-drawer";
 import MessengerButton from "@/components/chat/messenger-button";
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default function RootLayout({
                 <Header />
                 {children}
                 <AuthModal />
+                <CartDrawer />
                 <MessengerButton />
               </CartProvider>
             </AuthProvider>

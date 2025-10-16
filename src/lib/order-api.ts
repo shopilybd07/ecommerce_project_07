@@ -1,3 +1,5 @@
+"use server"
+
 import prisma from "./prisma"
 import { Prisma } from "@prisma/client"
 
@@ -64,6 +66,7 @@ export interface CreateOrderData {
   accountNumber?: string
   promotionCode?: string
   notes?: string
+  sessionId?: string
 }
 
 export interface Order {
@@ -133,111 +136,78 @@ function generateOrderNumber(): string {
   return `ORD-${timestamp.slice(-6)}-${random}`
 }
 
-export async function createOrder(data: CreateOrderData): Promise<Order> {
+export async function createOrder(data: CreateOrderData) {
   try {
-    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Validate customer
-      const user = await tx.user.findUnique({
-        where: { id: data.customerId },
+    // 1️⃣ Validate customer (outside transaction)
+    const user = await prisma.user.findUnique({
+      where: { id: data.customerId },
+    })
+
+    if (!user) throw new Error("Customer not found")
+
+    // 2️⃣ Validate products & compute subtotal
+    const productIds = data.items.map((i) => i.productId)
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      include: { inventory: true },
+    })
+
+    let subtotal = 0
+    const validatedItems = data.items.map((item) => {
+      const product = products.find((p) => p.id === item.productId)
+      if (!product || !product.inventory) throw new Error(`Product ${item.productId} not found`)
+      if (product.inventory.stockQuantity < item.quantity)
+        throw new Error(`Insufficient stock for product ${product.name}`)
+
+      const itemTotal = product.price * item.quantity
+      subtotal += itemTotal
+      return { productId: item.productId, quantity: item.quantity, price: product.price, total: itemTotal }
+    })
+
+    // 3️⃣ Handle promotion (outside tx until usage increment)
+    let discount = 0
+    let promotionId: string | null = null
+
+    if (data.promotionCode) {
+      const promotion = await prisma.promotion.findUnique({
+        where: { code: data.promotionCode },
       })
 
-      if (!user) {
-        throw new Error("Customer not found")
-      }
+      if (promotion && promotion.isActive) {
+        const now = new Date()
+        const isValid =
+          (!promotion.startsAt || promotion.startsAt <= now) &&
+          (!promotion.expiresAt || promotion.expiresAt >= now) &&
+          (!promotion.usageLimit || promotion.usedCount < promotion.usageLimit) &&
+          subtotal >= promotion.minOrderAmount
 
-      // Validate products and calculate totals
-      let subtotal = 0
-      const validatedItems = []
-
-      for (const item of data.items) {
-        const product = await tx.product.findUnique({
-          where: { id: item.productId },
-          include: { inventory: true },
-        })
-
-        if (!product || !product.inventory) {
-          throw new Error(`Product ${item.productId} not found`)
-        }
-
-        if (product.inventory.stockQuantity < item.quantity) {
-          throw new Error(`Insufficient stock for product ${product.name}`)
-        }
-
-        const itemTotal = product.price * item.quantity
-        subtotal += itemTotal
-
-        validatedItems.push({
-          productId: item.productId,
-          quantity: item.quantity,
-          price: product.price,
-          total: itemTotal,
-        })
-      }
-
-      // Apply promotion if provided
-      let discount = 0
-      let promotionId = null
-
-      if (data.promotionCode) {
-        const promotion = await tx.promotion.findUnique({
-          where: { code: data.promotionCode },
-        })
-
-        if (promotion && promotion.isActive) {
-          const now = new Date()
-          const isValid =
-            (!promotion.startsAt || promotion.startsAt <= now) &&
-            (!promotion.expiresAt || promotion.expiresAt >= now) &&
-            (!promotion.usageLimit || promotion.usedCount < promotion.usageLimit) &&
-            subtotal >= promotion.minOrderAmount
-
-          if (isValid) {
-            if (promotion.discountType === "PERCENTAGE") {
-              discount = subtotal * (promotion.discountValue / 100)
-            } else {
-              discount = promotion.discountValue
-            }
-
-            if (promotion.maxDiscountAmount) {
-              discount = Math.min(discount, promotion.maxDiscountAmount)
-            }
-
-            promotionId = promotion.id
-
-            // Update promotion usage
-            await tx.promotion.update({
-              where: { id: promotion.id },
-              data: { usedCount: promotion.usedCount + 1 },
-            })
-          }
+        if (isValid) {
+          discount =
+            promotion.discountType === "PERCENTAGE"
+              ? subtotal * (promotion.discountValue / 100)
+              : promotion.discountValue
+          if (promotion.maxDiscountAmount) discount = Math.min(discount, promotion.maxDiscountAmount)
+          promotionId = promotion.id
         }
       }
+    }
 
-      // Calculate tax and shipping (simplified)
-      const tax = subtotal * 0.08 // 8% tax
-      const shipping = subtotal > 100 ? 0 : 10 // Free shipping over $100
-      const total = subtotal + tax + shipping - discount
+    const tax = subtotal * 0.08
+    const shipping = subtotal > 100 ? 0 : 10
+    const total = subtotal + tax + shipping - discount
 
-      // Create or get shipping address
+    // 4️⃣ Perform all writes in ONE short transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create addresses
       const shippingAddress = await tx.address.create({
-        data: {
-          ...data.shippingAddress,
-          type: AddressType.SHIPPING,
-          customerId: data.customerId,
-        },
+        data: { ...data.shippingAddress, type: AddressType.SHIPPING, customerId: data.customerId },
       })
 
-      // Create or get billing address
-      let billingAddress = null
-      if (data.billingAddress) {
-        billingAddress = await tx.address.create({
-          data: {
-            ...data.billingAddress,
-            type: AddressType.BILLING,
-            customerId: data.customerId,
-          },
+      const billingAddress = data.billingAddress
+        ? await tx.address.create({
+          data: { ...data.billingAddress, type: AddressType.BILLING, customerId: data.customerId },
         })
-      }
+        : null
 
       // Create order
       const order = await tx.order.create({
@@ -259,80 +229,44 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
           shippingAddressId: shippingAddress.id,
           billingAddressId: billingAddress?.id,
           promotionId,
+          checkoutSessionId: data.sessionId,
         },
       })
 
       // Create order items
       await tx.orderItem.createMany({
-        data: validatedItems.map((item) => ({
-          ...item,
-          orderId: order.id,
-        })),
+        data: validatedItems.map((i) => ({ ...i, orderId: order.id })),
       })
 
-      // Update product stock
-      for (const item of validatedItems) {
-        await tx.inventory.update({
-          where: { productId: item.productId },
-          data: {
-            stockQuantity: {
-              decrement: item.quantity,
-            },
-          },
-        })
+      // Update inventory in parallel
+      await Promise.all(
+        validatedItems.map((i) =>
+          tx.inventory.update({
+            where: { productId: i.productId },
+            data: { stockQuantity: { decrement: i.quantity } },
+          })
+        )
+      )
 
-        // Create inventory movement
-        await tx.inventoryMovement.create({
-          data: {
-            productId: item.productId,
-            type: "OUT",
-            quantity: -item.quantity,
-            reason: "Order fulfillment",
-            referenceId: order.id,
-          },
+      // Increment promotion usage (if applied)
+      if (promotionId) {
+        await tx.promotion.update({
+          where: { id: promotionId },
+          data: { usedCount: { increment: 1 } },
         })
       }
 
-      // Clear customer's cart
-      const cart = await tx.cart.findUnique({
-        where: { customerId: data.customerId },
-      })
-
-      if (cart) {
-        await tx.cartItem.deleteMany({
-          where: { cartId: cart.id },
-        })
-      }
-
-      const newOrder = await tx.order.findUnique({
-        where: { id: order.id },
-        include: {
-          customer: {
-            select: { id: true, email: true, firstName: true, lastName: true },
-          },
-          shippingAddress: true,
-          billingAddress: true,
-          promotion: true,
-          orderItems: {
-            include: {
-              product: {
-                include: {
-                  images: {
-                    take: 1,
-                  },
-                },
-              },
-            },
-          },
-        },
-      })
-      if (!newOrder) {
-        throw new Error("Could not fetch newly created order")
-      }
-      return newOrder
+      return order
     })
+
+    // 5️⃣ Clear cart outside transaction (non-critical)
+    await prisma.cartItem.deleteMany({
+      where: { cart: { customerId: data.customerId } },
+    })
+
+    return result
   } catch (error) {
-    console.error("Error creating order:", error)
+    console.error("❌ Error creating order:", error)
     throw error
   }
 }

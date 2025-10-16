@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db"
 import { cookies } from "next/headers"
+import * as bcrypt from "bcryptjs"
 
 // Database entity interfaces
 interface DbUser {
@@ -94,12 +95,13 @@ export async function createUser(data: {
     }
 
     // In a real application, you should hash the password before storing it.
+    const hashedPassword = await bcrypt.hash(data.password, 10)
     const newUser = await prisma.user.create({
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        password: data.password, // Still storing plaintext for now as per original comment
+        password: hashedPassword,
         phone: data.phone,
         username: data.username,
         role: "CUSTOMER",
@@ -338,4 +340,41 @@ export async function getAuthCookie(): Promise<User | null> {
 export async function clearAuthCookie() {
   const cookieStore = await cookies()
   cookieStore.delete("auth-user")
+}
+
+// Login user
+export async function loginUser(data: {
+  email: string
+  password: string
+}): Promise<User | null> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    })
+
+    if (!user) {
+      console.error("User not found.")
+      return null
+    }
+
+    const isPasswordValid = await bcrypt.compare(data.password, user.password)
+
+    if (!isPasswordValid) {
+      console.error("Invalid password.")
+      return null
+    }
+
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username || undefined,
+      phone: user.phone,
+      email: user.email,
+      role: user.role,
+    }
+  } catch (error) {
+    console.error("Error logging in user:", error)
+    return null
+  }
 }
