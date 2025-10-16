@@ -465,7 +465,30 @@ function Checkout() {
                   <div key={item.id} className="flex justify-between items-center">
                     <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => dispatch({ type: "UPDATE_QUANTITY", payload: { id: item.id, quantity: item.quantity - 1 } })}
+                        >
+                          -
+                        </Button>
+                        <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => dispatch({ type: "ADD_ITEM", payload: item })}
+                        >
+                          +
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </div>
                     <p className="font-medium">৳{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
