@@ -140,7 +140,7 @@ function Checkout() {
 
     try {
       const orderData = {
-        userId: user.id,
+        customerId: user.id,
         items: items.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -339,24 +339,24 @@ function Checkout() {
                             onChange={(e) => setBillingAddress((prev) => ({ ...prev, zipCode: e.target.value }))}
                             required
                           />
-                    </div>
-                    <div>
-                      <Label htmlFor="billing-district">District</Label>
-                      <Input
-                        id="billing-district"
-                        value={billingAddress.district}
-                        onChange={(e) => setBillingAddress((prev) => ({ ...prev, district: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="billing-country">Country</Label>
-                      <Input
-                        id="billing-country"
-                        value={billingAddress.country}
-                        onChange={(e) => setBillingAddress((prev) => ({ ...prev, country: e.target.value }))}
-                        required
-                      />
+                        </div>
+                        <div>
+                          <Label htmlFor="billing-district">District</Label>
+                          <Input
+                            id="billing-district"
+                            value={billingAddress.district}
+                            onChange={(e) => setBillingAddress((prev) => ({ ...prev, district: e.target.value }))}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="billing-country">Country</Label>
+                          <Input
+                            id="billing-country"
+                            value={billingAddress.country}
+                            onChange={(e) => setBillingAddress((prev) => ({ ...prev, country: e.target.value }))}
+                            required
+                          />
                         </div>
                       </div>
                     </>
@@ -467,7 +467,7 @@ function Checkout() {
                       <p className="font-medium">{item.name}</p>
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     </div>
-                    <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-medium">৳{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 ))}
               </div>
@@ -475,11 +475,11 @@ function Checkout() {
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>৳{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>৳{tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
@@ -488,7 +488,7 @@ function Checkout() {
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>৳{total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
