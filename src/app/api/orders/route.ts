@@ -5,8 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Validate required fields
-    if (!body.customerId || !body.items || !body.shippingAddress || !body.paymentMethod) {
+    if (!body.items || !body.shippingAddress || !body.paymentMethod) {
       return NextResponse.json(
         {
           success: false,
@@ -26,12 +25,30 @@ export async function POST(request: NextRequest) {
       accountNumber: body.accountNumber,
       promotionCode: body.promotionCode,
       notes: body.notes,
+      sessionId: body.sessionId,
+      guestEmail: body.guestEmail,
+      guestPhone: body.guestPhone,
+      guestName: body.guestName,
     };
 
-    console.log(orderData);
-
-
+    if ((orderData.paymentMethod === "BKASH" || orderData.paymentMethod === "NAGAD") && (!orderData.transactionId || !orderData.accountNumber)) {
+      return NextResponse.json(
+        { success: false, error: "Transaction details required for mobile payments" },
+        { status: 400 },
+      )
+    }
     const order = await createOrder(orderData)
+
+    try {
+      const recipient = order.guestEmail || order.customer?.email
+      if (recipient) {
+        console.log("Order confirmation notification", {
+          to: recipient,
+          orderNumber: order.orderNumber,
+          total: order.total,
+        })
+      }
+    } catch {}
 
     return NextResponse.json({
       success: true,

@@ -18,6 +18,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Video,
+    Loader2,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,7 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+    const [isBuyNowLoading, setIsBuyNowLoading] = useState(false)
     const router = useRouter();
 
     const { data: product, isLoading } = useGetProductBySlugQuery(productSlug);
@@ -59,31 +61,32 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
     };
 
     const handleBuyNow = async () => {
-        if (product && user) {
-            try {
-                const response = await fetch("/api/checkout/sessions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        productId: product.id,
-                        quantity: quantity,
-                        userId: user.id,
-                    }),
-                });
+        if (!product) return;
+        setIsBuyNowLoading(true)
+        try {
+            const response = await fetch("/api/checkout/sessions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    productId: product.id,
+                    quantity: quantity,
+                    userId: user?.id,
+                }),
+            });
 
-                const result = await response.json();
+            const result = await response.json();
 
-                if (result.success) {
-                    router.push(`/checkout?sessionId=${result.data.sessionId}`);
-                } else {
-                    // Handle error
-                    console.error("Failed to create checkout session:", result.error);
-                }
-            } catch (error) {
-                console.error("Error creating checkout session:", error);
+            if (result.success) {
+                router.push(`/checkout?sessionId=${result.data.sessionId}`);
+            } else {
+                console.error("Failed to create checkout session:", result.error);
             }
+        } catch (error) {
+            console.error("Error creating checkout session:", error);
+        } finally {
+            setIsBuyNowLoading(false)
         }
     };
 
@@ -236,8 +239,19 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                 <Button size="lg" className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={handleAddToCart}>
                                     Add to Cart - ৳ {(product.price * quantity).toFixed(2)}
                                 </Button>
-                                <Button size="lg" className="flex-1 bg-gray-200 hover:bg-gray-300 text-black" onClick={handleBuyNow}>
-                                    Buy Now
+                                <Button
+                                    size="lg"
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-black"
+                                    onClick={handleBuyNow}
+                                    disabled={isBuyNowLoading}
+                                >
+                                    {isBuyNowLoading ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <Loader2 className="h-4 w-4 animate-spin" /> Processing...
+                                        </span>
+                                    ) : (
+                                        "Buy Now"
+                                    )}
                                 </Button>
                             </div>
                         </div>

@@ -110,10 +110,6 @@ export default function OrderDetailsPage() {
                             <span>৳{order.subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span>Tax</span>
-                            <span>৳{order.tax.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
                             <span>Shipping</span>
                             <span>৳{order.shipping.toFixed(2)}</span>
                         </div>

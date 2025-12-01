@@ -53,7 +53,7 @@ export function Header() {
         <div className="container mx-auto flex h-20 items-center justify-between px-4">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="font-bold text-2xl">CITY PAARK</span>
+              <span className="font-bold text-2xl">SHOPILYBD</span>
             </Link>
           </div>
           <Suspense fallback={<div>Loading...</div>}>
@@ -76,7 +76,7 @@ export function Header() {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-sm font-medium leading-none">{`${user.firstName} ${user.lastName}`}</p>
                       <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>

@@ -19,7 +19,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-gray-900 mb-2">
             <ShoppingBag className="h-8 w-8" />
-            ModernStore
+            ShopilyBD
           </Link>
         </div>
 

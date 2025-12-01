@@ -181,7 +181,6 @@ export interface Order {
   status: OrderStatus
   total: number
   subtotal: number
-  tax: number
   shipping: number
   trackingNumber?: string
   createdAt: Date

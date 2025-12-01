@@ -30,7 +30,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {products?.map((product) => (
               <ProductCard
                 key={product.id}
                 product={{
@@ -59,7 +59,7 @@ export default async function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <ShoppingBag className="h-6 w-6" />
-                <span className="font-bold text-xl">ModernStore</span>
+                <span className="font-bold text-xl">ShopilyBD</span>
               </div>
               <p className="text-gray-400 mb-4">
                 Your destination for premium products and exceptional shopping experience.

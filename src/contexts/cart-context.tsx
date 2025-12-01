@@ -154,11 +154,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const { openModal } = useModal()
 
   const addToCart = (item: Omit<CartItem, "quantity">) => {
-    if (user) {
-      dispatch({ type: "ADD_ITEM", payload: item })
-    } else {
-      openModal()
-    }
+    dispatch({ type: "ADD_ITEM", payload: item })
   }
 
   // Load cart from localStorage on mount

@@ -211,7 +211,6 @@ export async function createOrderFromCart(
   userId: string,
   orderData: {
     subtotal: number
-    tax: number
     shipping: number
     total: number
     shippingAddress: {
@@ -263,8 +262,8 @@ export async function createOrderFromCart(
 
     // Create order
     const order = await prisma.$queryRaw<{ id: string }[]>`
-      INSERT INTO orders (user_id, status, subtotal, tax, shipping, total)
-      VALUES (${userId}, 'PENDING', ${orderData.subtotal}, ${orderData.tax}, ${orderData.shipping}, ${orderData.total})
+      INSERT INTO orders (user_id, status, subtotal, shipping, total)
+      VALUES (${userId}, 'PENDING', ${orderData.subtotal}, ${orderData.shipping}, ${orderData.total})
       RETURNING id
     `
 

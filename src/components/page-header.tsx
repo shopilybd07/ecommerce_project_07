@@ -19,7 +19,7 @@ export function PageHeader() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center space-x-2">
             <ShoppingBag className="h-6 w-6" />
-            <span className="font-bold text-xl">ModernStore</span>
+            <span className="font-bold text-xl">ShopilyBD</span>
           </Link>
           <div className="hidden lg:block">
             <CategoryNavigation />

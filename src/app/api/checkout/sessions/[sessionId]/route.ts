@@ -21,7 +21,12 @@ export async function GET(
     const checkoutSession = await prisma.checkoutSession.findUnique({
       where: { id: sessionId },
       include: {
-        product: true,
+        product: {
+          include: {
+            images: { take: 1 },
+            category: true,
+          },
+        },
       },
     })
 

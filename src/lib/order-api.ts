@@ -1,7 +1,6 @@
 "use server"
 
 import prisma from "./prisma"
-import { Prisma } from "@prisma/client"
 
 // Define enums since they're not properly exported from @prisma/client
 export enum OrderStatus {
@@ -39,7 +38,7 @@ export enum PaymentMethod {
 }
 
 export interface CreateOrderData {
-  customerId: string
+  customerId?: string
   items: Array<{
     productId: string
     quantity: number
@@ -67,6 +66,9 @@ export interface CreateOrderData {
   promotionCode?: string
   notes?: string
   sessionId?: string
+  guestEmail?: string
+  guestPhone?: string
+  guestName?: string
 }
 
 export interface Order {
@@ -77,7 +79,6 @@ export interface Order {
   fulfillmentStatus: FulfillmentStatus
   paymentMethod: PaymentMethod
   subtotal: number
-  tax: number
   shipping: number
   discount: number
   total: number
@@ -138,12 +139,10 @@ function generateOrderNumber(): string {
 
 export async function createOrder(data: CreateOrderData) {
   try {
-    // 1️⃣ Validate customer (outside transaction)
-    const user = await prisma.user.findUnique({
-      where: { id: data.customerId },
-    })
-
-    if (!user) throw new Error("Customer not found")
+    const user = data.customerId
+      ? await prisma.user.findUnique({ where: { id: data.customerId } })
+      : null
+    if (data.customerId && !user) throw new Error("Customer not found")
 
     // 2️⃣ Validate products & compute subtotal
     const productIds = data.items.map((i) => i.productId)
@@ -192,20 +191,27 @@ export async function createOrder(data: CreateOrderData) {
       }
     }
 
-    const tax = subtotal * 0.08
     const shipping = subtotal > 100 ? 0 : 10
-    const total = subtotal + tax + shipping - discount
+    const total = subtotal + shipping - discount
 
     // 4️⃣ Perform all writes in ONE short transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create addresses
       const shippingAddress = await tx.address.create({
-        data: { ...data.shippingAddress, type: AddressType.SHIPPING, customerId: data.customerId },
+        data: {
+          ...data.shippingAddress,
+          type: AddressType.SHIPPING,
+          customerId: data.customerId || null,
+        },
       })
 
       const billingAddress = data.billingAddress
         ? await tx.address.create({
-          data: { ...data.billingAddress, type: AddressType.BILLING, customerId: data.customerId },
+          data: {
+            ...data.billingAddress,
+            type: AddressType.BILLING,
+            customerId: data.customerId || null,
+          },
         })
         : null
 
@@ -213,7 +219,7 @@ export async function createOrder(data: CreateOrderData) {
       const order = await tx.order.create({
         data: {
           orderNumber: generateOrderNumber(),
-          customerId: data.customerId,
+          customerId: data.customerId || null,
           status: OrderStatus.PENDING,
           paymentStatus: PaymentStatus.PENDING,
           fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
@@ -221,7 +227,6 @@ export async function createOrder(data: CreateOrderData) {
           transactionId: data.transactionId,
           accountNumber: data.accountNumber,
           subtotal,
-          tax,
           shipping,
           discount,
           total,
@@ -230,6 +235,9 @@ export async function createOrder(data: CreateOrderData) {
           billingAddressId: billingAddress?.id,
           promotionId,
           checkoutSessionId: data.sessionId,
+          guestEmail: data.guestEmail || null,
+          guestPhone: data.guestPhone || null,
+          guestName: data.guestName || null,
         },
       })
 
@@ -260,14 +268,34 @@ export async function createOrder(data: CreateOrderData) {
     })
 
     // 5️⃣ Clear cart outside transaction (non-critical)
-    await prisma.cartItem.deleteMany({
-      where: { cart: { customerId: data.customerId } },
-    })
+    if (data.customerId) {
+      await prisma.cartItem.deleteMany({
+        where: { cart: { customerId: data.customerId } },
+      })
+    }
 
     return result
   } catch (error) {
     console.error("❌ Error creating order:", error)
     throw error
+  }
+}
+
+export async function assignOrderToCustomer(orderId: string, customerId: string) {
+  try {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        customerId,
+        guestEmail: null,
+        guestPhone: null,
+        guestName: null,
+      },
+    })
+    return true
+  } catch (error) {
+    console.error("Error assigning order to customer:", error)
+    return false
   }
 }
 
@@ -303,7 +331,6 @@ export async function getOrderById(id: string): Promise<Order | null> {
     return {
       ...order,
       subtotal: order.subtotal,
-      tax: order.tax,
       shipping: order.shipping,
       discount: order.discount,
       total: order.total,
@@ -313,7 +340,7 @@ export async function getOrderById(id: string): Promise<Order | null> {
           discountValue: order.promotion.discountValue,
         }
         : null,
-      orderItems: order.orderItems.map((item: any) => ({
+      orderItems: order.orderItems.map((item) => ({
         ...item,
         price: item.price,
         total: item.total,
@@ -358,10 +385,9 @@ export async function getOrdersByCustomerId(customerId: string): Promise<Order[]
       orderBy: { createdAt: "desc" },
     })
 
-    return orders.map((order: any) => ({
+    return orders.map((order) => ({
       ...order,
       subtotal: order.subtotal,
-      tax: order.tax,
       shipping: order.shipping,
       discount: order.discount,
       total: order.total,
@@ -371,7 +397,7 @@ export async function getOrdersByCustomerId(customerId: string): Promise<Order[]
           discountValue: order.promotion.discountValue,
         }
         : null,
-      orderItems: order.orderItems.map((item: any) => ({
+      orderItems: order.orderItems.map((item) => ({
         ...item,
         price: item.price,
         total: item.total,

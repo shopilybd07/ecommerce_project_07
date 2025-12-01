@@ -2,9 +2,12 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useCart } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
+import { Loader2 } from "lucide-react"
+import { MouseEvent, useState } from "react"
 
 export interface ProductForCard {
   id: string
@@ -17,20 +20,35 @@ export interface ProductForCard {
 }
 
 export function ProductCard({ product }: { product: ProductForCard }) {
-  const { addToCart } = useCart();
+  const {
+    state: { user },
+  } = useAuth()
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
 
   console.log(product);
 
 
-  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleAddToCart = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image || "",
-      category: product.category,
-    })
+    setIsLoading(true)
+    try {
+      const response = await fetch("/api/checkout/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, quantity: 1, userId: user?.id }),
+      })
+      const result = await response.json()
+      if (result.success) {
+        router.push(`/checkout?sessionId=${result.data.sessionId}`)
+      } else {
+        console.error("Failed to create checkout session:", result.error)
+      }
+    } catch (error) {
+      console.error("Error creating checkout session:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -51,8 +69,14 @@ export function ProductCard({ product }: { product: ProductForCard }) {
           </div>
           <h3 className="font-semibold mb-2 text-lg">{product.name}</h3>
           <p className="font-bold text-xl mb-4">৳{product.price.toFixed(2)}</p>
-          <Button onClick={handleAddToCart} className="w-full bg-gray-200 hover:bg-gray-300 text-black">
-            BUY NOW
+          <Button onClick={handleAddToCart} className="w-full bg-gray-200 hover:bg-gray-300 text-black" disabled={isLoading}>
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Processing...
+              </span>
+            ) : (
+              "BUY NOW"
+            )}
           </Button>
         </CardContent>
       </Link>

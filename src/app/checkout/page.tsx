@@ -51,6 +51,8 @@ function Checkout() {
 
   const [items, setItems] = useState(cartState.items);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const isSessionMode = !!sessionId
+  const [isSessionLoading, setIsSessionLoading] = useState(false)
 
   useEffect(() => {
     const sessionId = searchParams.get('sessionId');
@@ -58,16 +60,17 @@ function Checkout() {
       setSessionId(sessionId);
       const fetchSessionData = async () => {
         try {
+          setIsSessionLoading(true)
           const response = await fetch(`/api/checkout/sessions/${sessionId}`);
           const result = await response.json();
 
           if (result.success) {
             const { product, quantity, price } = result.data;
-            setItems([{
+            setItems([{ 
               id: product.id,
               name: product.name,
               price: price,
-              image: product.images[0]?.url || "", // Use optional chaining and a fallback
+              image: product.images?.[0]?.url || "",
               quantity: quantity,
               category: product.category?.name || "",
             }]);
@@ -77,6 +80,8 @@ function Checkout() {
           }
         } catch (error) {
           console.error("Error fetching checkout session:", error);
+        } finally {
+          setIsSessionLoading(false)
         }
       };
       fetchSessionData();
@@ -110,24 +115,20 @@ function Checkout() {
   const [accountNumber, setAccountNumber] = useState("")
   const [promotionCode, setPromotionCode] = useState("")
   const [notes, setNotes] = useState("")
+  const [contactName, setContactName] = useState("")
+  const [contactEmail, setContactEmail] = useState("")
+  const [contactPhone, setContactPhone] = useState("")
+  const [createAccount, setCreateAccount] = useState(false)
 
   // Calculate totals
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const tax = subtotal * 0.08 // 8% tax rate
+  const displayItems = isSessionMode ? items : cartState.items
+  const subtotal = displayItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const shipping = subtotal > 100 ? 0 : 10 // Free shipping over $100
-  const total = subtotal + tax + shipping
+  const total = subtotal + shipping
 
   const handleSubmitOrder = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to place an order.",
-        variant: "destructive",
-      })
-      return
-    }
 
-    if (items.length === 0) {
+    if (displayItems.length === 0) {
       toast({
         title: "Empty Cart",
         description: "Please add items to your cart before checkout.",
@@ -139,21 +140,25 @@ function Checkout() {
     setIsLoading(true)
 
     try {
-      const orderData = {
-        customerId: user.id,
-        items: items.map((item) => ({
-          productId: item.id,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        shippingAddress,
-        billingAddress: useBillingAsShipping ? undefined : billingAddress,
-        paymentMethod: paymentMethod as any,
-        transactionId: transactionId || undefined,
-        accountNumber: accountNumber || undefined,
-        promotionCode: promotionCode || undefined,
-        notes: notes || undefined,
-      }
+    const orderData: any = {
+      customerId: user?.id,
+      items: displayItems.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      shippingAddress,
+      billingAddress: useBillingAsShipping ? undefined : billingAddress,
+      paymentMethod: paymentMethod as any,
+      transactionId: transactionId || undefined,
+      accountNumber: accountNumber || undefined,
+      promotionCode: promotionCode || undefined,
+      notes: notes || undefined,
+      sessionId,
+      guestEmail: user ? undefined : contactEmail || undefined,
+      guestPhone: user ? undefined : contactPhone || undefined,
+      guestName: user ? undefined : contactName || undefined,
+    }
 
       const response = await fetch("/api/orders", {
         method: "POST",
@@ -173,7 +178,11 @@ function Checkout() {
           title: "Order Placed Successfully!",
           description: `Your order ${result.data.orderNumber} has been placed.`,
         })
-        router.push(`/orders/${result.data.id}`)
+        if (!user && createAccount) {
+          router.push(`/register`)
+        } else {
+          router.push(`/orders/${result.data.id}`)
+        }
       } else {
         throw new Error(result.error)
       }
@@ -189,21 +198,9 @@ function Checkout() {
     }
   }
 
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-            <p className="text-gray-600 mb-6">Please log in to continue with checkout.</p>
-            <Button onClick={() => router.push("/login")}>Go to Login</Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  
 
-  if (items.length === 0) {
+  if (displayItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
@@ -227,6 +224,33 @@ function Checkout() {
               <CardTitle>Checkout</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Step 0: Contact Information */}
+              {step >= 1 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Contact Information</h3>
+                  {!user && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="contact-name">Full Name</Label>
+                        <Input id="contact-name" value={contactName} onChange={(e) => setContactName(e.target.value)} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="contact-email">Email</Label>
+                        <Input id="contact-email" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="contact-phone">Phone</Label>
+                        <Input id="contact-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} required />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="create-account" checked={createAccount} onCheckedChange={(checked) => setCreateAccount(!!checked)} />
+                        <Label htmlFor="create-account">Create an account after purchase</Label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Step 1: Shipping Address */}
               {step >= 1 && (
                 <div className="space-y-4">
@@ -439,12 +463,16 @@ function Checkout() {
                   </Button>
                 )}
                 {step < 3 ? (
-                  <Button onClick={() => setStep(step + 1)} className="ml-auto">
+                  <Button onClick={() => setStep(step + 1)} className="ml-auto" disabled={isSessionLoading}>
                     Next
                   </Button>
                 ) : (
-                  <Button onClick={handleSubmitOrder} disabled={isLoading || !paymentMethod} className="ml-auto">
-                    {isLoading ? "Placing Order..." : "Place Order"}
+                  <Button onClick={handleSubmitOrder} disabled={isLoading || !paymentMethod || isSessionLoading} className="ml-auto">
+                    {isLoading ? (
+                      <span className="flex items-center gap-2"><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" /><span>Placing Order...</span></span>
+                    ) : (
+                      "Place Order"
+                    )}
                   </Button>
                 )}
               </div>
@@ -461,7 +489,7 @@ function Checkout() {
             <CardContent className="space-y-4">
               {/* Cart Items */}
               <div className="space-y-2">
-                {items.map((item) => (
+                {displayItems.map((item) => (
                   <div key={item.id} className="flex justify-between items-center">
                     <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
@@ -469,7 +497,13 @@ function Checkout() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => dispatch({ type: "UPDATE_QUANTITY", payload: { id: item.id, quantity: item.quantity - 1 } })}
+                          onClick={() => {
+                            if (isSessionMode) {
+                              setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, quantity: Math.max(1, item.quantity - 1) } : i)))
+                            } else {
+                              dispatch({ type: "UPDATE_QUANTITY", payload: { id: item.id, quantity: item.quantity - 1 } })
+                            }
+                          }}
                         >
                           -
                         </Button>
@@ -477,14 +511,26 @@ function Checkout() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => dispatch({ type: "ADD_ITEM", payload: item })}
+                          onClick={() => {
+                            if (isSessionMode) {
+                              setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)))
+                            } else {
+                              dispatch({ type: "ADD_ITEM", payload: item })
+                            }
+                          }}
                         >
                           +
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
+                          onClick={() => {
+                            if (isSessionMode) {
+                              setItems((prev) => prev.filter((i) => i.id !== item.id))
+                            } else {
+                              dispatch({ type: "REMOVE_ITEM", payload: item.id })
+                            }
+                          }}
                         >
                           Remove
                         </Button>
@@ -499,10 +545,6 @@ function Checkout() {
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span>৳{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span>৳{tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
