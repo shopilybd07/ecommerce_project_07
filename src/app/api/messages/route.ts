@@ -11,14 +11,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Content and senderId are required" }, { status: 400 })
     }
 
-    // Verify sender exists
-    const sender = await prisma.customer.findUnique({
-      where: { id: senderId },
-    })
+    // // Verify sender exists
+    // const sender = await prisma.customer.findUnique({
+    //   where: { id: senderId },
+    // })
 
-    if (!sender) {
-      return NextResponse.json({ error: "Sender not found" }, { status: 404 })
-    }
+    // if (!sender) {
+    //   return NextResponse.json({ error: "Sender not found" }, { status: 404 })
+    // }
 
     const message = await createMessage({
       content,
@@ -46,25 +46,28 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user exists and get their role
-    const user = await prisma.customer.findUnique({
-      where: { id: userId },
-    })
+    // const user = await prisma.customer.findUnique({
+    //   where: { id: userId },
+    // })
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
+    // if (!user) {
+    //   return NextResponse.json({ error: "User not found" }, { status: 404 })
+    // }
 
     let conversations
 
-    if (isAdmin && ["ADMIN", "MODERATOR", "SUPER_ADMIN"].includes(user.role)) {
-      // Admin panel: show all customer conversations
-      conversations = await getAllCustomerConversations()
-    } else if (user.role === "CUSTOMER") {
-      // Customer: show only their own conversations
+    // if (isAdmin && ["ADMIN", "MODERATOR", "SUPER_ADMIN"].includes(user.role)) {
+    //   // Admin panel: show all customer conversations
+    //   conversations = await getAllCustomerConversations()
+    // } else if (user.role === "CUSTOMER") {
+    //   // Customer: show only their own conversations
+    //   conversations = await getCustomerConversations(userId)
+    // } else {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    // }
+
       conversations = await getCustomerConversations(userId)
-    } else {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-    }
+
 
     return NextResponse.json(conversations)
   } catch (error) {

@@ -69,10 +69,14 @@ export function useMessaging({ userId, userRole, isAdmin = false }: UseMessaging
     }
 
     if (isAdmin && ["ADMIN", "MODERATOR", "SUPER_ADMIN"].includes(userRole)) {
-      // Admin: subscribe to admin messages channel
+      // Admin: subscribe to admin messages and user support channels
       const adminChannel = ably.channels.get(CHANNELS.ADMIN_MESSAGES)
       adminChannel.subscribe("new-message", handleNewMessage)
       channels.push(adminChannel)
+
+      const supportChannel = ably.channels.get(CHANNELS.USER_SUPPORT)
+      supportChannel.subscribe("new-message", handleNewMessage)
+      channels.push(supportChannel)
     } else if (userRole === "CUSTOMER") {
       // Customer: subscribe to user support channel
       const supportChannel = ably.channels.get(CHANNELS.USER_SUPPORT)

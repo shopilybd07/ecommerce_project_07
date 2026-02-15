@@ -120,9 +120,11 @@ export async function createUser(data: {
 
     return {
       id: newUser.id,
-      name: newUser.name,
-      username: newUser.username || undefined,
-      phone: newUser.phone,
+      firstName: newUser.firstName || "",
+      lastName: newUser.lastName || "",
+      role: newUser.role || "CUSTOMER",
+      username: newUser.username || "",
+      phone: newUser.phone || "",
       email: newUser.email,
     }
   } catch (error) {
@@ -138,16 +140,26 @@ export async function getUserByEmail(email: string): Promise<User | null> {
       where: { email },
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         email: true,
         username: true,
         phone: true,
+        role: true,
       },
     })
 
     if (!user) return null
 
-    return user
+    return {
+      id: user.id,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      role: user.role || "CUSTOMER",
+      username: user.username || "",
+      phone: user.phone || "",
+      email: user.email,
+    }
   } catch (error) {
     console.error("Error getting user by email:", error)
     return null
@@ -365,12 +377,12 @@ export async function loginUser(data: {
 
     return {
       id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username || undefined,
-      phone: user.phone,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      username: user.username || "",
+      phone: user.phone || "",
       email: user.email,
-      role: user.role,
+      role: user.role || "CUSTOMER",
     }
   } catch (error) {
     console.error("Error logging in user:", error)

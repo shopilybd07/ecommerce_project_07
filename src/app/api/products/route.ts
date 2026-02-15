@@ -5,9 +5,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get("categoryId") || undefined
+    const subcategoryId = searchParams.get("subcategoryId") || undefined
 
     const filters = {
       categoryId,
+      subcategoryId,
     }
 
     const products = await getProducts(filters)

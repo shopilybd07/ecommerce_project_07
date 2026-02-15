@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect, Suspense } from "react"
-import { Search, X, Clock, TrendingUp } from "lucide-react"
+import { Search, X, TrendingUp } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useSearch } from "@/hooks/use-search"
+import { Product } from "@/types/product"
 
 interface SearchBarProps {
   className?: string
@@ -27,11 +28,9 @@ export function SearchBar({ className, placeholder = "Search products...", showS
   const {
     searchQuery,
     searchResults,
-    searchHistory,
     handleSearchChange,
     handleSearchSubmit,
     clearSearch,
-    clearSearchHistory,
     isLoading,
   } = useSearch()
 
@@ -85,7 +84,7 @@ export function SearchBar({ className, placeholder = "Search products...", showS
     inputRef.current?.focus()
   }
 
-  const showDropdown = isOpen && showSuggestions && (inputValue.length > 0 || searchHistory.length > 0)
+  const showDropdown = isOpen && showSuggestions && inputValue.length > 0
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -132,10 +131,10 @@ export function SearchBar({ className, placeholder = "Search products...", showS
               )}
 
               {/* Search Suggestions */}
-              {!isLoading && inputValue && searchResults.suggestions.length > 0 && (
+              {!isLoading && inputValue && (searchResults.suggestions?.length || 0) > 0 && (
                 <div className="border-b">
                   <div className="p-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Suggestions</div>
-                  {searchResults.suggestions.map((suggestion, index) => (
+                  {searchResults.suggestions?.map((suggestion: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestionClick(suggestion)}
@@ -149,27 +148,27 @@ export function SearchBar({ className, placeholder = "Search products...", showS
               )}
 
               {/* Search Results Preview */}
-              {!isLoading && inputValue && searchResults.products.length > 0 && (
+              {!isLoading && inputValue && (searchResults.products?.length || 0) > 0 && (
                 <div className="border-b">
                   <div className="p-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Products ({searchResults.totalResults})
                   </div>
-                  {searchResults.products.slice(0, 3).map((product) => (
+                  {searchResults.products?.slice(0, 3).map((product: Product) => (
                     <Link
                       key={product.id}
-                      href={`/products/${product.category}/${product.id}`}
+                      href={`/products/${product.category?.name?.toLowerCase()}/${product.subcategory?.name?.toLowerCase()}/${product.slug || product.id}`}
                       onClick={() => setIsOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50"
                     >
                       <div className="w-10 h-10 bg-gray-100 rounded-lg flex-shrink-0"></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{product.name}</p>
-                        <p className="text-xs text-gray-500">${product.price}</p>
+                        <p className="text-xs text-gray-500">৳ {product.price}</p>
                       </div>
-                      {product.isSale && <Badge className="bg-red-100 text-red-800 text-xs">Sale</Badge>}
+                      {/* {product.isSale && <Badge className="bg-red-100 text-red-800 text-xs">Sale</Badge>} */}
                     </Link>
                   ))}
-                  {searchResults.products.length > 3 && (
+                  {(searchResults.products?.length || 0) > 3 && (
                     <Link
                       href={`/search?q=${encodeURIComponent(inputValue)}`}
                       onClick={() => setIsOpen(false)}
@@ -184,32 +183,10 @@ export function SearchBar({ className, placeholder = "Search products...", showS
               {/* No Results */}
               {!isLoading &&
                 inputValue &&
-                searchResults.products.length === 0 &&
-                searchResults.suggestions.length === 0 && (
+                (searchResults.products?.length || 0) === 0 &&
+                (searchResults.suggestions?.length || 0) === 0 && (
                   <div className="p-4 text-center text-sm text-gray-500">No results found for "{inputValue}"</div>
                 )}
-
-              {/* Search History */}
-              {!inputValue && searchHistory.length > 0 && (
-                <div className="border-b">
-                  <div className="flex items-center justify-between p-3">
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Recent Searches</div>
-                    <Button variant="ghost" size="sm" onClick={clearSearchHistory} className="text-xs">
-                      Clear
-                    </Button>
-                  </div>
-                  {searchHistory.slice(0, 5).map((query, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestionClick(query)}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3"
-                    >
-                      <Clock className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">{query}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
 
               {/* Popular Searches */}
               {!inputValue && (

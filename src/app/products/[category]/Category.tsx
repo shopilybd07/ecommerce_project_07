@@ -320,8 +320,8 @@ export default function CategoryPage({ params }: { params: { category: string } 
                                                 className="mb-3"
                                             />
                                             <div className="flex items-center justify-between text-sm text-gray-600">
-                                                <span>${filters.priceRange[0]}</span>
-                                                <span>${filters.priceRange[1]}</span>
+                                                <span>৳ {filters.priceRange[0]}</span>
+                                                <span>৳ {filters.priceRange[1]}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -428,7 +428,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
 
                                     {(filters.priceRange[0] > 0 || filters.priceRange[1] < 1000) && (
                                         <Badge variant="secondary" className="gap-1">
-                                            ${filters.priceRange[0]} - ${filters.priceRange[1]}
+                                            ৳ {filters.priceRange[0]} - ৳ {filters.priceRange[1]}
                                             <button onClick={() => removeFilter("price")} className="hover:bg-gray-300 rounded-full p-0.5">
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -546,9 +546,9 @@ export default function CategoryPage({ params }: { params: { category: string } 
                                                             {product.name}
                                                         </h3>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-lg">${product.price}</span>
+                                                            <span className="font-bold text-lg">৳ {product.price}</span>
                                                             {product.originalPrice && (
-                                                                <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+                                                                <span className="text-sm text-gray-500 line-through">৳ {product.originalPrice}</span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -582,9 +582,9 @@ export default function CategoryPage({ params }: { params: { category: string } 
                                                         </h3>
                                                         <p className="text-sm text-gray-600 mb-2">Electronics • Premium Quality</p>
                                                         <div className="flex items-center gap-2 mb-2">
-                                                            <span className="font-bold text-lg">${product.price}</span>
+                                                            <span className="font-bold text-lg">৳ {product.price}</span>
                                                             {product.originalPrice && (
-                                                                <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+                                                                <span className="text-sm text-gray-500 line-through">৳ {product.originalPrice}</span>
                                                             )}
                                                         </div>
                                                         <Button

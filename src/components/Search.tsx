@@ -155,7 +155,10 @@ export default function SearchPage() {
                             className={viewMode === "grid" ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"}
                         >
                             {sortedProducts.map((product) => (
-                                <Link key={product.id} href={`/products/${product.categoryId}/${product.id}`}>
+                                <Link
+                                    key={product.id}
+                                    href={`/products/${product.category?.name?.toLowerCase()}/${product.subcategory?.name?.toLowerCase()}/${product.slug || product.id}`}
+                                >
                                     <Card className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300">
                                         <CardContent className="p-0">
                                             {viewMode === "grid" ? (
@@ -211,9 +214,9 @@ export default function SearchPage() {
                                                             {product.name}
                                                         </h3>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-lg">${product.price}</span>
+                                                            <span className="font-bold text-lg">৳ {product.price}</span>
                                                             {product.originalPrice && (
-                                                                <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+                                                                <span className="text-sm text-gray-500 line-through">৳ {product.originalPrice}</span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -247,9 +250,9 @@ export default function SearchPage() {
                                                         </h3>
                                                         <p className="text-sm text-gray-600 mb-2 line-clamp-2">{product.description}</p>
                                                         <div className="flex items-center gap-2 mb-2">
-                                                            <span className="font-bold text-lg">${product.price}</span>
+                                                            <span className="font-bold text-lg">৳ {product.price}</span>
                                                             {product.originalPrice && (
-                                                                <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+                                                                <span className="text-sm text-gray-500 line-through">৳ {product.originalPrice}</span>
                                                             )}
                                                         </div>
                                                         <Button

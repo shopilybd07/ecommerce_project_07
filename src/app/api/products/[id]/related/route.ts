@@ -4,19 +4,20 @@ import { getRelatedProducts } from "@/lib/product-api";
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { searchParams } = new URL(request.url);
+    const categoryId = searchParams.get("categoryId");
     const subcategoryId = searchParams.get("subcategoryId");
 
-    if (!subcategoryId) {
+    if (!subcategoryId && !categoryId) {
       return NextResponse.json(
         {
           success: false,
-          error: "Subcategory ID is required",
+          error: "Category ID or Subcategory ID is required",
         },
         { status: 400 },
       );
     }
 
-    const relatedProducts = await getRelatedProducts(params.id, subcategoryId);
+    const relatedProducts = await getRelatedProducts(params.id, categoryId || undefined, subcategoryId || undefined);
 
     return NextResponse.json({
       success: true,

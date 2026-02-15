@@ -34,6 +34,7 @@ model User {
   chatRoom             ChatRoom?
   CheckoutSession      CheckoutSession[]
   orders               Order[]
+  Wishlist             Wishlist?
 
   @@map("users")
 }
@@ -77,6 +78,8 @@ model Category {
   name          String
   description   String?
   status        CategoryStatus @default(ACTIVE)
+  imageUrl      String?
+  imageFileId   String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   products      Product[]
@@ -91,6 +94,8 @@ model Subcategory {
   description String?
   status      SubcategoryStatus @default(ACTIVE)
   categoryId  String
+  imageUrl    String?
+  imageFileId String?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   products    Product[]
@@ -122,6 +127,7 @@ model Product {
   subcategory     Subcategory?      @relation(fields: [subcategoryId], references: [id])
   stockAlerts     StockAlert[]
   videos          Video[]
+  wishlistItems   WishlistItem[]
 
   @@map("products")
 }
@@ -311,6 +317,12 @@ model AssetFolder {
   @@map("asset_folders")
 }
 
+enum AssetDevice {
+  MOBILE
+  TABLET
+  DESKTOP
+}
+
 model Asset {
   id         String       @id @default(cuid())
   name       String
@@ -319,6 +331,7 @@ model Asset {
   url        String
   fileId     String?
   folderId   String?
+  device     AssetDevice
   usage      AssetUsage   @default(GENERAL)
   dimensions String?
   duration   String?
@@ -460,4 +473,27 @@ enum ProductType {
 enum AlertType {
   LOW_STOCK
   OUT_OF_STOCK
+}
+
+model Wishlist {
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WishlistItem[]
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  wishlistId String
+  productId  String
+  createdAt  DateTime @default(now())
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([wishlistId, productId])
+  @@map("wishlist_items")
 }

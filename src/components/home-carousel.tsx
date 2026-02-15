@@ -1,56 +1,128 @@
+ "use client";
+ 
 import Image from "next/image";
-import { getBannerAssets } from "@/lib/asset-api";
+import { useEffect, useState } from "react";
+import { useGetAssetsQuery } from "@/store/api";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton";
+ 
+ export function HomeCarousel() {
+   const { data: banners = [], isLoading } = useGetAssetsQuery();
+   const [api, setApi] = useState<CarouselApi | null>(null);
+   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [device, setDevice] = useState<"MOBILE" | "TABLET" | "DESKTOP">(
+    "DESKTOP"
+  );
 
-export async function HomeCarousel() {
-  const banners = await getBannerAssets();
+  useEffect(() => {
+    const updateDevice = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setDevice("MOBILE");
+        return;
+      }
+      if (width < 1024) {
+        setDevice("TABLET");
+        return;
+      }
+      setDevice("DESKTOP");
+    };
 
-  console.log("banners", banners);
-
-
-  if (!banners || banners.length === 0) {
-    return (
-      <div className="flex aspect-[16/9] w-full items-center justify-center bg-gray-100 dark:bg-gray-800">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold">No Banners Available</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            There are currently no banners to display.
-          </p>
+    updateDevice();
+    window.addEventListener("resize", updateDevice);
+    return () => window.removeEventListener("resize", updateDevice);
+  }, []);
+ 
+   useEffect(() => {
+     if (!api) return;
+     const onSelect = () => setSelectedIndex(api.selectedScrollSnap());
+     api.on("select", onSelect);
+     onSelect();
+     return () => {
+       api.off("select", onSelect);
+     };
+   }, [api]);
+ 
+   useEffect(() => {
+     if (!api) return;
+     const interval = setInterval(() => {
+       api.scrollNext();
+     }, 10000);
+     return () => clearInterval(interval);
+   }, [api]);
+ 
+   if (isLoading) {
+     return (
+      <div className="w-full">
+        <Skeleton className="aspect-[16/9] w-full" />
+        <div className="flex items-center justify-center gap-2 py-4">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="h-2 w-2 rounded-full" />
+          ))}
         </div>
       </div>
-    );
-  }
-
-  return (
-    <Carousel
-      className="w-full"
-      opts={{
-        loop: true,
-      }}
-    >
-      <CarouselContent>
-        {banners.map((banner) => (
-          <CarouselItem key={banner.id}>
-            <div className="relative h-[500px] w-full object-cover">
-              <Image
-                src={banner.url}
-                alt={banner.name}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
-      <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
-    </Carousel>
+     );
+   }
+ 
+  const filteredBanners = banners.filter(
+    (banner: any) => banner.device === device
   );
-}
+
+  if (!filteredBanners || filteredBanners.length === 0) {
+     return (
+       <div className="flex aspect-[16/9] w-full items-center justify-center bg-gray-100 dark:bg-gray-800">
+         <div className="text-center">
+           <h3 className="text-lg font-semibold">No Banners Available</h3>
+           <p className="text-sm text-gray-500 dark:text-gray-400">
+             There are currently no banners to display.
+           </p>
+         </div>
+       </div>
+     );
+   }
+ 
+   return (
+     <Carousel
+       className="w-full"
+       opts={{
+         loop: true,
+       }}
+       setApi={setApi}
+     >
+       <CarouselContent>
+        {filteredBanners.map((banner: any) => (
+           <CarouselItem key={banner.id}>
+             <div className="relative h-[450px] md:h-[450px] w-full object-cover">
+               <Image
+                 src={banner.url}
+                 alt={banner.name}
+                 fill
+                 className="object-cover"
+                 priority
+               />
+             </div>
+           </CarouselItem>
+         ))}
+       </CarouselContent>
+      <CarouselPrevious className="left-4 bg-white/80 hover:bg-white" />
+      <CarouselNext className="right-4 bg-white/80 hover:bg-white" />
+       <div className="flex items-center justify-center gap-2 py-4">
+        {filteredBanners.map((_: any, idx: number) => (
+           <button
+             key={idx}
+             aria-label={`Go to slide ${idx + 1}`}
+             onClick={() => api?.scrollTo(idx)}
+             className={`h-2 w-2 rounded-full transition-colors ${selectedIndex === idx ? "bg-purple-600" : "bg-gray-300"}`}
+           />
+         ))}
+       </div>
+     </Carousel>
+   );
+ }

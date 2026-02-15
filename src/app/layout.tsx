@@ -6,13 +6,12 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { ModalProvider } from "@/contexts/modal-context";
 import { StoreProvider } from "@/components/StoreProvider";
 import { CartProvider } from "@/contexts/cart-context";
-import { Header } from "@/components/header";
-import { AuthModal } from "@/components/auth/auth-modal";
 import { CartDrawer } from "@/components/cart-drawer";
-import MessengerButton from "@/components/chat/messenger-button";
+import { Navbar } from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Shopilybd",
+  title: "ShopilyBD",
   description: "Your daily ecommerce solution",
 }
 
@@ -34,11 +33,10 @@ export default function RootLayout({
           <ModalProvider>
             <AuthProvider>
               <CartProvider>
-                <Header />
+                <Navbar />
                 {children}
-                <AuthModal />
+                <Footer />
                 <CartDrawer />
-                <MessengerButton />
               </CartProvider>
             </AuthProvider>
           </ModalProvider>

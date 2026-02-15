@@ -7,7 +7,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      assets: assets,
+      data: assets,
     })
   } catch (error) {
     console.error("Error in banners API:", error)

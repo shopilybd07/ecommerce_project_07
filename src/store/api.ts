@@ -10,11 +10,12 @@ export interface ApiResponse<T> {
 export const api = createApi({
     reducerPath: 'api',
     baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+    tagTypes: ['Wishlist'],
     endpoints: (builder) => ({
-        getProducts: builder.query({
-            query: () => ({
+        getProducts: builder.query<any, { categoryId?: string; subcategoryId?: string } | void>({
+            query: (args) => ({
                 url: 'products',
-                // params: { ...filters, ...pagination },
+                params: args ? { categoryId: args.categoryId, subcategoryId: args.subcategoryId } : undefined,
             }),
         }),
         getProductById: builder.query<Product, string>({
@@ -53,10 +54,10 @@ export const api = createApi({
         getSubcategoryById: builder.query<any, string>({
             query: (id) => `subcategories/${id}`,
         }),
-        getRelatedProducts: builder.query<Product[], { categoryId: string; subcategoryId: string; currentProductId: string }>({
+        getRelatedProducts: builder.query<Product[], { categoryId?: string; subcategoryId?: string; currentProductId: string }>({
             query: ({ categoryId, subcategoryId, currentProductId }) => ({
-                url: 'products/related',
-                params: { categoryId, subcategoryId, exclude: currentProductId },
+                url: `products/${currentProductId}/related`,
+                params: { categoryId, subcategoryId },
             }),
             transformResponse: (response: ApiResponse<Product[]>) => {
                 if (response.success) {
@@ -64,6 +65,34 @@ export const api = createApi({
                 }
                 throw new Error(response.message || "Failed to fetch related products");
             },
+        }),
+        getAssets: builder.query<any[], void>({
+            query: () => 'assets/banners',
+            transformResponse: (response: ApiResponse<any[]> | { success: boolean; assets: any[] }) => {
+                if ('data' in response) {
+                    return response.data;
+                }
+                return response.assets || [];
+            },
+        }),
+        getWishlist: builder.query<any[], void>({
+            query: () => 'wishlist',
+            providesTags: ['Wishlist'],
+        }),
+        addToWishlist: builder.mutation<any, { productId: string }>({
+            query: (body) => ({
+                url: 'wishlist',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Wishlist'],
+        }),
+        removeFromWishlist: builder.mutation<any, string>({
+            query: (productId) => ({
+                url: `wishlist/${productId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Wishlist'],
         }),
     }),
 });
@@ -78,4 +107,8 @@ export const {
     useGetSubcategoriesQuery,
     useGetSubcategoryByIdQuery,
     useGetRelatedProductsQuery,
+    useGetAssetsQuery,
+    useGetWishlistQuery,
+    useAddToWishlistMutation,
+    useRemoveFromWishlistMutation,
 } = api;

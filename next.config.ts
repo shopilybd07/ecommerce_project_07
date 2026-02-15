@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ["ik.imagekit.io"],
+    domains: ["ik.imagekit.io", "picsum.photos"],
   },
 };
 

@@ -5,53 +5,33 @@ export async function getOrCreateChatRoom(userId: string) {
   let chatRoom = await prisma.chatRoom.findUnique({
     where: { userId },
     include: {
-      participants: {
-        include: {
-          user: true,
-        },
-      },
+      participants: { include: { user: true } },
     },
-  });
+  })
 
   if (!chatRoom) {
-    // Find an admin to assign to the chat room
-    const admin = await prisma.user.findFirst({
-      where: {
-        roles: {
-          some: {
-            role: {
-              name: { in: ["ADMIN", "SUPER_ADMIN"] },
-            },
-          },
-        },
-      },
-    });
+    // const admin = await prisma.user.findFirst({
+    //   where: { role: "ADMIN" },
+    // })
 
-    if (!admin) {
-      throw new Error("No admin available to assign to the chat room.");
-    }
+    // if (!admin) {
+    //   throw new Error("No admin available to assign to the chat room.")
+    // }
 
     chatRoom = await prisma.chatRoom.create({
       data: {
         userId,
         participants: {
-          create: [
-            { userId },
-            { userId: admin.id },
-          ],
+          create: [{ userId }],
         },
       },
       include: {
-        participants: {
-          include: {
-            user: true,
-          },
-        },
+        participants: { include: { user: true } },
       },
-    });
+    })
   }
 
-  return chatRoom;
+  return chatRoom
 }
 
 export async function sendMessage(senderId: string, roomId: string, message: string) {

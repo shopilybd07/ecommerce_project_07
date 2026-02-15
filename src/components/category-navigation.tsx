@@ -49,7 +49,7 @@ export function CategoryNavigation({ className }: CategoryNavigationProps) {
           return (
             <div
               key={category.id}
-              className="relative"
+              className="relative pb-2"
               onMouseEnter={() => setHoveredCategory(category.id)}
               onMouseLeave={() => setHoveredCategory(null)}
             >
@@ -61,17 +61,19 @@ export function CategoryNavigation({ className }: CategoryNavigationProps) {
               </Link>
 
               {hoveredCategory === category.id && hasSubcategories && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                  <div className="p-2 space-y-1">
-                    {categorySubcategories.map((subcategory: any) => (
-                      <Link
-                        key={subcategory.id}
-                        href={`/products/${category.name.toLowerCase()}/${subcategory.name.toLowerCase()}`}
-                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
-                      >
-                        {subcategory.name}
-                      </Link>
-                    ))}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+                  <div className="w-56 bg-white border border-gray-200 rounded-md shadow-lg">
+                    <div className="p-2 space-y-1">
+                      {categorySubcategories.map((subcategory: any) => (
+                        <Link
+                          key={subcategory.id}
+                          href={`/products/${category.name.toLowerCase()}/${subcategory.name.toLowerCase()}`}
+                          className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                        >
+                          {subcategory.name}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

@@ -80,7 +80,7 @@ export default function OrderDetailsPage() {
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-lg font-bold">Total: ৳{order.total.toFixed(2)}</p>
+                            <p className="text-lg font-bold">Total: ৳ {order.total.toFixed(2)}</p>
                             <Badge>{order.status}</Badge>
                         </div>
                     </div>
@@ -94,10 +94,10 @@ export default function OrderDetailsPage() {
                                 <div className="flex-1">
                                     <p className="font-medium">{item.product.name}</p>
                                     <p className="text-sm text-gray-600">
-                                        Qty: {item.quantity} @ ৳{item.price.toFixed(2)}
+                                        Qty: {item.quantity} @ ৳ {item.price.toFixed(2)}
                                     </p>
                                 </div>
-                                <p className="font-medium">৳{item.total.toFixed(2)}</p>
+                                <p className="font-medium">৳ {item.total.toFixed(2)}</p>
                             </div>
                         ))}
                     </div>
@@ -107,22 +107,22 @@ export default function OrderDetailsPage() {
                         <h3 className="text-lg font-semibold">Summary</h3>
                         <div className="flex justify-between">
                             <span>Subtotal</span>
-                            <span>৳{order.subtotal.toFixed(2)}</span>
+                            <span>৳ {order.subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Shipping</span>
-                            <span>৳{order.shipping.toFixed(2)}</span>
+                            <span>৳ {order.shipping.toFixed(2)}</span>
                         </div>
                         {order.discount > 0 && (
                             <div className="flex justify-between text-green-600">
                                 <span>Discount</span>
-                                <span>-৳{order.discount.toFixed(2)}</span>
+                                <span>-৳ {order.discount.toFixed(2)}</span>
                             </div>
                         )}
                         <div className="border-t pt-2 mt-2">
                             <div className="flex justify-between font-bold text-lg">
                                 <span>Total</span>
-                                <span>৳{order.total.toFixed(2)}</span>
+                                <span>৳ {order.total.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

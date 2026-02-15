@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { ShoppingBag } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
-import { useModal } from "@/contexts/modal-context"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,13 +18,13 @@ import { useCart } from "@/contexts/cart-context"
 import { Badge } from "./ui/badge"
 import { Suspense, useEffect, useState } from "react"
 import { CategoryNavigation } from "./category-navigation"
+import { ChatFab } from "@/components/chat-fab"
 
 export function Header() {
   const {
     state: { user },
     logout,
-  } = useAuth()
-  const { openModal } = useModal()
+  } = useAuth();
   const { state, dispatch } = useCart()
   const [isSticky, setIsSticky] = useState(false)
 
@@ -88,8 +87,10 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="ghost" onClick={openModal}>
-                LOGIN / REGISTER
+              <Button variant="ghost" asChild>
+                <Link href="/login">
+                  LOGIN / REGISTER
+                </Link>
               </Button>
             )}
             <div className="flex items-center gap-1">
@@ -113,6 +114,7 @@ export function Header() {
         {isSticky ? <CategoryNavigation /> : null}
       </header>
       {isSticky ? null : <CategoryNavigation />}
+      <ChatFab />
     </div>
   )
 }

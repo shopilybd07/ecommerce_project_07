@@ -8,25 +8,28 @@ export function useSearch() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "")
-  const [searchHistory, setSearchHistory] = useState<string[]>([])
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
 
-  const { data: searchResults, isLoading } = useSearchProductsQuery(
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+    }, 300)
+    return () => clearTimeout(handler)
+  }, [searchQuery])
+
+  const { data: rawResults, isLoading } = useSearchProductsQuery(
     {
-      query: searchQuery,
+      query: debouncedQuery,
       filters: {},
       pagination: { page: 1, limit: 20, sortBy: "createdAt", sortOrder: "desc" },
     },
     {
-      skip: !searchQuery,
+      skip: !debouncedQuery,
     }
   )
 
-  useEffect(() => {
-    const history = localStorage.getItem("searchHistory")
-    if (history) {
-      setSearchHistory(JSON.parse(history))
-    }
-  }, [])
+  const searchResults =
+    rawResults ?? { products: [], suggestions: [], total: 0, totalResults: 0 }
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query)
@@ -36,34 +39,23 @@ export function useSearch() {
     (query: string) => {
       if (!query.trim()) return
 
-      const newHistory = [query, ...searchHistory.filter((item) => item !== query)].slice(0, 10)
-      setSearchHistory(newHistory)
-      localStorage.setItem("searchHistory", JSON.stringify(newHistory))
-
       const params = new URLSearchParams(searchParams.toString())
       params.set("q", query)
       router.push(`/search?${params.toString()}`)
     },
-    [searchHistory, searchParams, router]
+    [searchParams, router]
   )
 
   const clearSearch = useCallback(() => {
     setSearchQuery("")
   }, [])
 
-  const clearSearchHistory = useCallback(() => {
-    setSearchHistory([])
-    localStorage.removeItem("searchHistory")
-  }, [])
-
   return {
     searchQuery,
     searchResults,
-    searchHistory,
     handleSearchChange,
     handleSearchSubmit,
     clearSearch,
-    clearSearchHistory,
     isLoading,
   }
 }

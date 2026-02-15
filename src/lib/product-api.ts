@@ -48,14 +48,22 @@ export async function getProductById(id: string) {
   })
 }
 
-export async function getRelatedProducts(productId: string, subcategoryId: string) {
-  return prisma.product.findMany({
-    where: {
-      subcategoryId,
-      id: {
-        not: productId,
-      },
+export async function getRelatedProducts(productId: string, categoryId?: string, subcategoryId?: string) {
+  const where: any = {
+    id: {
+      not: productId,
     },
+  }
+
+  // Broaden search to category if provided, otherwise fallback to subcategory
+  if (categoryId) {
+    where.categoryId = categoryId
+  } else if (subcategoryId) {
+    where.subcategoryId = subcategoryId
+  }
+  
+  return prisma.product.findMany({
+    where,
     include: {
       category: true,
       subcategory: true,

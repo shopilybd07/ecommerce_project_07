@@ -97,7 +97,7 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                   <User className="h-4 w-4 text-purple-600" />
                 </div>
-                <span className="font-medium">{state.user.name}</span>
+                <span className="font-medium">{state.user.firstName + " " + state.user.lastName}</span>
               </div>
               <Button variant="ghost" size="icon" onClick={logout}>
                 <LogOut className="h-4 w-4" />
@@ -118,7 +118,7 @@ export default function DashboardPage() {
                     <User className="h-6 w-6 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{state.user.name}</h3>
+                    <h3 className="font-semibold">{state.user.firstName + " " + state.user.lastName}</h3>
                     <p className="text-sm text-gray-600">{state.user.email}</p>
                   </div>
                 </div>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
               <>
                 {/* Welcome Section */}
                 <div className="mb-8">
-                  <h1 className="text-3xl font-bold mb-2">Welcome back, {state.user.name}!</h1>
+                  <h1 className="text-3xl font-bold mb-2">Welcome back, {state.user.firstName + " " + state.user.lastName}!</h1>
                   <p className="text-gray-600">Here's what's happening with your orders.</p>
                 </div>
 
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                               </Badge>
                             </div>
                             <div className="text-right">
-                              <p className="font-semibold">${order.total.toFixed(2)}</p>
+                              <p className="font-semibold">৳ {order.total.toFixed(2)}</p>
                               <p className="text-sm text-gray-600">{new Date(order.date).toLocaleDateString()}</p>
                             </div>
                           </div>
@@ -280,7 +280,7 @@ export default function DashboardPage() {
                                   <h4 className="font-medium text-sm">{item.name}</h4>
                                   <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                                 </div>
-                                <p className="font-semibold text-sm">${(item.price * item.quantity).toFixed(2)}</p>
+                                <p className="font-semibold text-sm">৳ {(item.price * item.quantity).toFixed(2)}</p>
                               </div>
                             ))}
                           </div>

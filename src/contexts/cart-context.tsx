@@ -2,10 +2,9 @@
 
 import type React from "react"
 import { createContext, useContext, useReducer, useEffect } from "react"
-import { useAuth } from "./auth-context"
-import { useModal } from "./modal-context"
+import { useAuth } from "./auth-context";
 
-interface CartItem {
+export interface CartItem {
   id: string
   name: string
   price: number
@@ -14,11 +13,12 @@ interface CartItem {
   category: string
 }
 
-interface CartState {
+export interface CartState {
   items: CartItem[]
   isOpen: boolean
   total: number
   itemCount: number
+  isInitialized: boolean
 }
 
 type CartAction =
@@ -29,7 +29,8 @@ type CartAction =
   | { type: "TOGGLE_CART" }
   | { type: "OPEN_CART" }
   | { type: "CLOSE_CART" }
-  | { type: "SET_CART"; payload: CartState }
+  | { type: "SET_CART"; payload: Partial<CartState> }
+  | { type: "INITIALIZE" }
 
 const CartContext = createContext<{
   state: CartState
@@ -39,6 +40,11 @@ const CartContext = createContext<{
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
+    case "INITIALIZE":
+      return {
+        ...state,
+        isInitialized: true,
+      }
     case "SET_CART": {
       return {
         ...state,
@@ -146,12 +152,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     isOpen: false,
     total: 0,
     itemCount: 0,
+    isInitialized: false,
   })
 
   const {
     state: { user },
   } = useAuth()
-  const { openModal } = useModal()
 
   const addToCart = (item: Omit<CartItem, "quantity">) => {
     dispatch({ type: "ADD_ITEM", payload: item })
@@ -174,6 +180,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         },
       })
     }
+    dispatch({ type: "INITIALIZE" })
   }, [])
 
   // Save cart to localStorage whenever it changes
