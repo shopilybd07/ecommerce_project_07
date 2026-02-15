@@ -26,19 +26,19 @@ export function TopProducts() {
     );
   }
   return (
-    <section className="px-6 lg:px-12 py-16 md:py-24 bg-secondary/50">
+    <section className="py-16">
       <div className="text-center mb-12">
         <h2
           className="text-3xl md:text-4xl font-light tracking-wide mb-3"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Bestsellers
+          Best selling products
         </h2>
         <p className="text-muted-foreground text-sm tracking-wide">
           Most loved pieces from our collection
         </p>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-12 md:gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-12 md:gap-8">
         {(isLoading ? [] : products).map((product: any) => (
           <ProductGridCard key={product.id} product={product} />
         ))}

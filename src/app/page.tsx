@@ -7,7 +7,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white mt-3">
-      <div className="mx-auto w-full max-w-[1440px]">
+      <div className="mx-auto w-full max-w-[1440px] px-4">
         <HomeCarousel />
         <TopCategories />
         <TopProducts />

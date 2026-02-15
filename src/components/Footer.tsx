@@ -1,15 +1,21 @@
-import { ShoppingBag } from 'lucide-react'
-import Link from 'next/link'
-import React from 'react'
+import Link from 'next/link';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-white py-16">
-        <div className="container mx-auto px-4">
+    <footer className="w-full max-w-[1440px] mx-auto bg-black/90 text-white px-4 pt-16 pb-4">
+        <div className="px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <ShoppingBag className="h-6 w-6" />
+                {/* <Image
+                  src="/shopily_logo.png"
+                  alt="ShopilyBD"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  priority={true}
+                  className='w-7 h-auto'
+                /> */}
                 <span className="font-bold text-xl">ShopilyBD</span>
               </div>
               <p className="text-gray-400 mb-4">
@@ -92,8 +98,8 @@ const Footer = () => {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Shopilybd. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-12 text-center text-gray-400">
+            <p>&copy; {new Date().getFullYear()} Shopilybd. All rights reserved.</p>
           </div>
         </div>
       </footer>

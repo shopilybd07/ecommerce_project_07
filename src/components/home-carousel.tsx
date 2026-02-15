@@ -77,13 +77,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
   if (!filteredBanners || filteredBanners.length === 0) {
      return (
-       <div className="flex aspect-[16/9] w-full items-center justify-center bg-gray-100 dark:bg-gray-800">
-         <div className="text-center">
-           <h3 className="text-lg font-semibold">No Banners Available</h3>
-           <p className="text-sm text-gray-500 dark:text-gray-400">
-             There are currently no banners to display.
-           </p>
-         </div>
+       <div className="w-full h-[450px] bg-gray-100">
        </div>
      );
    }
@@ -99,7 +93,7 @@ import { Skeleton } from "@/components/ui/skeleton";
        <CarouselContent>
         {filteredBanners.map((banner: any) => (
            <CarouselItem key={banner.id}>
-             <div className="relative h-[450px] md:h-[450px] w-full object-cover">
+             <div className="relative h-[450px] w-full object-cover">
                <Image
                  src={banner.url}
                  alt={banner.name}

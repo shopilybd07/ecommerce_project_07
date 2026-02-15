@@ -44,7 +44,7 @@ export function Navbar() {
   const categories = data?.data || [];
 
   return (
-    <nav className="max-w-[1440px] mx-auto sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+    <nav className="w-full max-w-[1440px] mx-auto px-4 sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="relative" onMouseLeave={() => setActiveCategory(null)}>
         <div className="flex items-center justify-between px-6 lg:px-0 h-20">
         {/* Mobile menu */}
@@ -57,8 +57,8 @@ export function Navbar() {
         </button>
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 font-display text-2xl font-semibold tracking-wider uppercase" style={{ fontFamily: "var(--font-display)" }}>
-          <Image src="/shopily_logo.png" alt="SHOPILYBD" width={0} height={0} sizes="100vw" className="w-10 h-auto" />
+        <Link href="/" className="flex items-center gap-2 font-display text-2xl font-semibold tracking-wider uppercase" style={{ fontFamily: "var(--font-display)" }}>
+          <Image src="/shopily_logo.png" alt="SHOPILYBD" width={0} height={0} sizes="100vw" className="w-7 h-auto" />
           SHOPILYBD
         </Link>
 
@@ -82,7 +82,7 @@ export function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          <div className="hidden md:block w-[240px] lg:w-[320px]">
+          <div className="hidden md:block w-[240px]">
             <Suspense fallback={<div />}>
               <SearchBar />
             </Suspense>
@@ -159,14 +159,14 @@ export function Navbar() {
         {activeCategory && (
           <div className="hidden lg:block absolute left-0 right-0 bg-background border-b border-border shadow-lg z-50 pb-12">
             <div className="max-w-5xl mx-auto px-12 py-4">
-              <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+              <div className="grid grid-cols-3 lg:grid-cols-4 gap-8">
                 {categories
                   .find((c: Category) => c.name === activeCategory)
                   ?.subcategories.map((sub: Subcategory) => (
                     <Link
                       key={sub.name}
                       href={`/products/${activeCategory.toLowerCase()}/${sub.name.toLowerCase()}`}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+                      className="text-muted-foreground hover:text-foreground transition-colors py-1"
                     >
                       {sub.name}
                     </Link>
