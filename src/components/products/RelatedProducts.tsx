@@ -20,7 +20,7 @@ export function RelatedProducts({ categoryId, subcategoryId, currentProductId }:
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Related Products</h2>
+        <h2 className="text-2xl font-bold text-gray-600">Products you may also like</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
             <ProductCardSkeleton key={i} />
@@ -33,8 +33,8 @@ export function RelatedProducts({ categoryId, subcategoryId, currentProductId }:
   if (!relatedProducts || relatedProducts.length === 0) return null
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Related Products</h2>
+    <div className="space-y-8 pt-12">
+      <h2 className="text-2xl font-semibold text-gray-500">Products you may also like</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {relatedProducts.map((product) => (
           <ProductGridCard

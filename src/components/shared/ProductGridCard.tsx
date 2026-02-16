@@ -25,15 +25,16 @@ export type ProductGridItem = {
   const { data: wishlist } = useGetWishlistQuery(undefined, { skip: !user });
   const [addToWishlist] = useAddToWishlistMutation();
   const [removeFromWishlist] = useRemoveFromWishlistMutation();
+  const productUrl = product.subcategory ? `/products/${product.category.name.toLowerCase()}/${product.subcategory?.name?.toLowerCase()}/${product.slug}` : `/products/${product.category.name.toLowerCase()}/${product.slug}`;
 
   const isInWishlist = wishlist?.some((item: any) => item.productId === product.id);
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
+    // if (!user) {
+    //   router.push("/login");
+    //   return;
+    // }
 
     if (isInWishlist) {
       await removeFromWishlist(product.id);
@@ -59,10 +60,10 @@ export type ProductGridItem = {
   return (
     <Link
        key={product.id}
-       href={`/products/${product.category.name.toLowerCase()}/${product.subcategory?.name?.toLowerCase()}/${product.slug}`}
+       href={productUrl}
        className="group"
      >
-       <div className="relative aspect-square overflow-hidden bg-card mb-3">
+       <div className="relative aspect-[3/4] overflow-hidden bg-card mb-3">
          <img
            src={product.images?.[0]?.url || ""}
            alt={product.name}

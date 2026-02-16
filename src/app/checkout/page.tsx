@@ -211,7 +211,7 @@ function Checkout() {
 
   if (displayItems.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-[1440px] mx-auto px-4 py-8">
         <Card>
           <CardContent className="p-8 text-center">
             <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
@@ -224,7 +224,7 @@ function Checkout() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full- max-w-[1440px] mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Checkout Form */}
         <div className="lg:col-span-2">

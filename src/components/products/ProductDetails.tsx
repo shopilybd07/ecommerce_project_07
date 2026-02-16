@@ -63,6 +63,7 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                     price: product.price,
                     image: product.images[0].url,
                     category: product.category.name,
+                    quantity,
                 },
             })
         }
@@ -149,19 +150,20 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                     <Image
                                         src={product.images[selectedImage].url || "/placeholder.svg"}
                                         alt={product.name}
-                                        width={900}
-                                        height={900}
+                                        width={0}
+                                        height={0}
+                                        sizes="100vw"
                                         className="w-full h-full object-cover cursor-pointer"
                                     />
                                 </PhotoView>
-                                <Button
+                                {/* <Button
                                     variant="ghost"
                                     size="icon"
                                     className="absolute top-4 right-4 bg-white/80 hover:bg-white cursor-pointer"
                                     onClick={toggleWishlist}
                                 >
                                     <Heart className={cn("h-5 w-5", isInWishlist && "fill-red-500 text-red-500")} />
-                                </Button>
+                                </Button> */}
                                 {selectedImage > 0 && (
                                     <Button
                                         variant="ghost"
@@ -240,11 +242,10 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                             >
                                 {product.category.name}
                             </Badge>
-                            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900">{product.name}</h1>
+                            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-700">{product.name}</h1>
                             <div className="flex items-center gap-3">
-                                <span className="text-lg sm:text-xl font-medium text-gray-900">৳ {product.price}</span>
+                                <span className="text-lg sm:text-xl font-medium text-gray-700">৳ {product.price}</span>
                             </div>
-                            <div className="text-gray-600 leading-relaxed text-sm">{parse(product.description)}</div>
                         </div>
 
                         {/* Features */}
@@ -333,8 +334,8 @@ const ProductDetails = ({ productSlug }: { productSlug: string }) => {
                                 </Button>
                             </div>
                         )}
-                        <Accordion type="single" collapsible className="border-t border-b border-gray-200">
-                            <AccordionItem value="details">
+                        <Accordion type="single" collapsible defaultValue="details" className="border-t border-b border-gray-200">
+                            <AccordionItem value="details" >
                                 <AccordionTrigger className="text-base font-medium">Details</AccordionTrigger>
                                 <AccordionContent className="text-sm text-gray-600 leading-relaxed">
                                     {parse(product.description)}

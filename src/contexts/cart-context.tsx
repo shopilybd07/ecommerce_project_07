@@ -22,7 +22,7 @@ export interface CartState {
 }
 
 type CartAction =
-  | { type: "ADD_ITEM"; payload: Omit<CartItem, "quantity"> }
+  | { type: "ADD_ITEM"; payload: Omit<CartItem, "quantity"> & { quantity?: number } }
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "CLEAR_CART" }
@@ -35,7 +35,7 @@ type CartAction =
 const CartContext = createContext<{
   state: CartState
   dispatch: React.Dispatch<CartAction>
-  addToCart: (item: Omit<CartItem, "quantity">) => void
+  addToCart: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void
 } | null>(null)
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
@@ -52,11 +52,12 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       }
     }
     case "ADD_ITEM": {
+      const quantityToAdd = action.payload.quantity && action.payload.quantity > 0 ? action.payload.quantity : 1
       const existingItem = state.items.find((item) => item.id === action.payload.id)
 
       if (existingItem) {
         const updatedItems = state.items.map((item) =>
-          item.id === action.payload.id ? { ...item, quantity: item.quantity + 1 } : item,
+          item.id === action.payload.id ? { ...item, quantity: item.quantity + quantityToAdd } : item,
         )
         const total = updatedItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
         const itemCount = updatedItems.reduce((sum, item) => sum + item.quantity, 0)
@@ -69,7 +70,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           isOpen: true,
         }
       } else {
-        const newItems = [...state.items, { ...action.payload, quantity: 1 }]
+        const newItems = [...state.items, { ...action.payload, quantity: quantityToAdd }]
         const total = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
         const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -159,7 +160,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     state: { user },
   } = useAuth()
 
-  const addToCart = (item: Omit<CartItem, "quantity">) => {
+  const addToCart = (item: Omit<CartItem, "quantity"> & { quantity?: number }) => {
     dispatch({ type: "ADD_ITEM", payload: item })
   }
 
